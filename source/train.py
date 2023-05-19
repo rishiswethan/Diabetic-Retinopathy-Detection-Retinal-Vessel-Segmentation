@@ -165,9 +165,10 @@ def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, 
 
     model = models.EfficientNetB3(num_classes=NUM_CLASSES, class_weights=class_weights)
     # model = models.ViT_B_16(num_classes=NUM_CLASSES, class_weights=class_weights)
+    model.to(DEVICE)
 
     # visualise training set and model
-    visualise_generator(hp_dict, train_loader, num_images=3)
+    visualise_generator(hp_dict, train_loader, num_images=3, model=model)
 
     # Train the model using torch
     history = pt_train.fit(
@@ -189,7 +190,7 @@ def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, 
         return opt_result
 
 
-def visualise_generator(hp_dict, data_loader, num_classes=NUM_CLASSES, full_labels=FULL_LABELS, num_images=None):
+def visualise_generator(hp_dict, data_loader, num_classes=NUM_CLASSES, full_labels=FULL_LABELS, num_images=None, model=None):
     if type(data_loader) == str:
         if data_loader == 'train':
             data_generator = get_data_generators()[0]
@@ -201,8 +202,10 @@ def visualise_generator(hp_dict, data_loader, num_classes=NUM_CLASSES, full_labe
     if type(data_loader) != torch.utils.data.DataLoader:
         data_loader = torch.utils.data.DataLoader(data_generator, batch_size=1, shuffle=False, num_workers=0)
 
-    model = torch.load(cf.MODEL_SAVE_PATH_BEST_VAL_LOSS).eval()
+    if model is None:
+        model = torch.load(cf.MODEL_SAVE_PATH_BEST_VAL_LOSS).eval()
 
+    model.eval()
     # evaluate model on data_loader
     print("Evaluating model on data_loader: ")
     results = pt_train._evaluate(model, data_loader)
@@ -240,7 +243,7 @@ def visualise_generator(hp_dict, data_loader, num_classes=NUM_CLASSES, full_labe
 if __name__ == "__main__":
     # tune_hyperparameters()
     best_hp_dict = {
-        'batch_size': 8,
+        'batch_size': 16,
         'conv_model': 'vit',
         "prob_apply_augmentation": 0.8,
     }

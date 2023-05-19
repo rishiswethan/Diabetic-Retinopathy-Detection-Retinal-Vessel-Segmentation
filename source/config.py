@@ -51,9 +51,9 @@ ENABLE_TRAIN_LR_SCHEDULER = True
 REDUCE_LR_PATIENCE_TRAIN = 5
 REDUCE_LR_FACTOR_TRAIN = 0.5  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for VAL lr scheduler
-ENABLE_VAL_LR_SCHEDULER = False
-REDUCE_LR_PATIENCE_VAL = 8
-REDUCE_LR_FACTOR_VAL = 0.5  # setting this to 1.0 will not reduce the learning rate
+ENABLE_VAL_LR_SCHEDULER = True
+REDUCE_LR_PATIENCE_VAL = 2
+REDUCE_LR_FACTOR_VAL = 0.2  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for early stopping
 EARLY_STOPPING_MONITOR = 'val_acc'
 EARLY_STOPPING_PATIENCE = 20
