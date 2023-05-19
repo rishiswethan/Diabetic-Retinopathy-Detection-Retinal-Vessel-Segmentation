@@ -1,0 +1,5 @@
+opencv_python==4.5.5.62
+numpy==1.23.4
+matplotlib==3.6.2
+tqdm==4.64.1
+hyperopt==0.2.7

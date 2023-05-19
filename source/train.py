@@ -152,7 +152,7 @@ def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, 
     # get and set generators
     train_gen, val_gen = get_data_generators()
     train_loader = torch.utils.data.DataLoader(train_gen, batch_size=batch_size, shuffle=True, num_workers=MAX_THREADS)
-    val_loader = torch.utils.data.DataLoader(val_gen, batch_size=batch_size, shuffle=True, num_workers=MAX_THREADS)
+    val_loader = torch.utils.data.DataLoader(val_gen, batch_size=batch_size, shuffle=False, num_workers=0)
 
     # Create the model
     input_shape = (3, SQUARE_SIZE, SQUARE_SIZE)
@@ -197,10 +197,14 @@ def visualise_generator(hp_dict, data_loader, num_classes=NUM_CLASSES, full_labe
         raise TypeError("data_loader must be of type str or torch.utils.data.DataLoader, or \"train\" or \"val\"")
 
     if type(data_loader) != torch.utils.data.DataLoader:
-        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=1, shuffle=False, num_workers=10)
+        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=1, shuffle=False, num_workers=0)
 
-    model = models.EfficientNetB3(num_classes=num_classes).to(DEVICE)
-    model.eval()
+    model = torch.load(cf.MODEL_SAVE_PATH_BEST_VAL_LOSS).eval()
+
+    # evaluate model on data_loader
+    print("Evaluating model on data_loader: ", data_loader)
+    results = pt_train._evaluate(model, data_loader)
+    print("Results: ", results)
 
     cnt = 0
     for batch in data_loader:
