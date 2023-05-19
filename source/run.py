@@ -9,7 +9,7 @@ if choice == '1':
     best_hp_dict = {
         'batch_size': 8,
         'conv_model': 'vit',
-        "prob_apply_augmentation": 0.8,
+        "prob_apply_augmentation": 0.9,
     }
     train.train(best_hp_dict)
 

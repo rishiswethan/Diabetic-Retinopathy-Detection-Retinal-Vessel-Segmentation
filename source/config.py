@@ -55,7 +55,7 @@ ENABLE_VAL_LR_SCHEDULER = False
 REDUCE_LR_PATIENCE_VAL = 8
 REDUCE_LR_FACTOR_VAL = 0.5  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for early stopping
-EARLY_STOPPING_MONITOR = 'train_loss'
+EARLY_STOPPING_MONITOR = 'val_acc'
 EARLY_STOPPING_PATIENCE = 20
 
 NUM_CLASSES = len(FULL_LABELS)

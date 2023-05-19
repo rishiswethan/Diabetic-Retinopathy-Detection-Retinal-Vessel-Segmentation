@@ -254,10 +254,11 @@ class DataGenerator(torch.utils.data.Dataset):
         return torch.tensor(image, dtype=torch.float32), torch.tensor(label, dtype=torch.float32)
 
 
-# datagen = DataGenerator(train_or_test='train', augmentation=get_training_augmentation(SQUARE_SIZE, SQUARE_SIZE), verbose=True)
-# for image, label in datagen:
-#     print(image.shape)
-#     print(label)
-#
-#     plt.imshow(np.transpose(image, (1, 2, 0)))
-#     plt.show()
+if __name__ == '__main__':
+    datagen = DataGenerator(train_or_test='train', augmentation=get_training_augmentation(SQUARE_SIZE, SQUARE_SIZE), verbose=True)
+    for image, label in datagen:
+        print(image.shape)
+        print(label)
+
+        plt.imshow(np.transpose(image, (1, 2, 0)))
+        plt.show()
