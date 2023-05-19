@@ -2,12 +2,14 @@ from torchvision.models import *
 from torch.nn import functional as F
 from torch import nn
 import torch
+import torch_inception_resnet_v2.model as inception_resnet_v2
 
 import pytorch_utils.callbacks as pt_callbacks
 import pytorch_utils.training_utils as pt_train
 import source.data_handling as data_handling
 import source.config as cf
 import source.utils as utils
+import source.models as models
 
 DEVICE = cf.DEVICE
 NUM_CLASSES = cf.NUM_CLASSES
@@ -102,131 +104,6 @@ def get_callbacks(
     return defined_callbacks, stop_flag
 
 
-class CustomModelBase(pt_train.CustomModelBase):
-    """
-    ModelBase override for training and validation steps
-    """
-    def __init__(self, class_weights):
-        super(CustomModelBase, self).__init__()
-        self.class_weights = class_weights
-
-    def training_step(self, batch):
-        # print("batch: ", len(batch))
-        images, labels = batch
-
-        out = self(images)  # Generate predictions
-        loss = F.cross_entropy(out, labels, weight=self.class_weights)  # Calculate loss with class weights
-        acc = pt_train._accuracy(out, labels)  # Calculate accuracy
-        return loss, acc
-
-    def validation_step(self, batch):
-        images, labels = batch
-
-        out = self(images)  # Generate predictions
-        loss = F.cross_entropy(out, labels, weight=self.class_weights)  # Calculate loss with class weights
-        acc = pt_train._accuracy(out, labels)  # Calculate accuracy
-        return {'val_loss': loss.detach(), 'val_acc': acc}
-
-
-class CustomModel(CustomModelBase):
-    """
-        A custom model that inherits from CustomModelBase.
-        This class is meant to be used with the training_utils.py module.
-
-        Parameters
-        ----------
-        input_shape - The shape of the input data (n, 3, height, width), (n, 1404)
-        dropout_rate - The dropout rate to use
-        dense_units - The number of units in the dense layer
-        num_layers - The number of dense layers
-        l1_l2_reg - The L1 and L2 regularization to use (Not implemented yet)
-        layers_batch_norm - Whether to use batch normalization in the dense layers
-        conv_model_name - The name of the convolutional model to use. Choose from the list in the get_conv_model function
-        class_weights : list - The class weights to use. If None, all classes will have the same weight
-        device - The device to use
-    """
-
-    def __init__(
-            self,
-            conv_model_name,
-            input_shape,
-            class_weights=None,
-            device=DEVICE,
-    ):
-
-        if class_weights is None:
-            class_weights = torch.ones(NUM_CLASSES)
-        else:
-            class_weights = torch.tensor(class_weights)
-
-        # convert to cuda tensor
-        class_weights = class_weights.to(device)
-
-        super(CustomModel, self).__init__(class_weights=class_weights)
-
-        self.base_model_conv = self.get_conv_model(conv_model_name)
-
-        # Remove the final classification layer (fc)
-        self.base_model = nn.Sequential(*list(self.base_model_conv.children())[:-1])
-
-        self.flatten = nn.Flatten()
-
-        # Determine the output size of the base model
-        with torch.no_grad():
-            sample_input = torch.randn(1, input_shape[0], input_shape[1], input_shape[2])
-            print("sample_input: ", sample_input.shape)
-            self.base_output_size = self.base_model(sample_input).numel()
-
-        self.out_no_lands = nn.Linear(self.base_output_size, NUM_CLASSES)
-
-    def get_conv_model(self, conv_model_name):
-        if conv_model_name == "resnet50":
-            return resnet50(weights=ResNet50_Weights.DEFAULT)
-        elif conv_model_name == "resnet18":
-            return resnet18(weights=ResNet18_Weights.DEFAULT)
-        elif conv_model_name == "resnet34":
-            return resnet34(weights=ResNet34_Weights.DEFAULT)
-        elif conv_model_name == "resnet101":
-            return resnet101(weights=ResNet101_Weights.DEFAULT)
-        elif conv_model_name == "resnet152":
-            return resnet152(weights=ResNet152_Weights.DEFAULT)
-        elif conv_model_name == "resnext50_32x4d":
-            return resnext50_32x4d(weights=ResNeXt50_32X4D_Weights.DEFAULT)
-        elif conv_model_name == "resnext101_32x8d":
-            return resnext101_32x8d(weights=ResNeXt101_32X8D_Weights.DEFAULT)
-        elif conv_model_name == "wide_resnet50_2":
-            return wide_resnet50_2(weights=Wide_ResNet50_2_Weights.DEFAULT)
-        elif conv_model_name == "wide_resnet101_2":
-            return wide_resnet101_2(weights=Wide_ResNet101_2_Weights.DEFAULT)
-        elif conv_model_name == "inception":
-            return inception_v3(weights=Inception_V3_Weights.DEFAULT)
-        elif conv_model_name == "googlenet":
-            return googlenet(weights=GoogLeNet_Weights.DEFAULT)
-        elif conv_model_name == "mobilenet":
-            return mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
-        elif conv_model_name == "densenet":
-            return densenet121(weights=DenseNet121_Weights.DEFAULT)
-        elif conv_model_name == "alexnet":
-            return alexnet(weights=AlexNet_Weights.DEFAULT)
-        elif conv_model_name == "vgg16":
-            return vgg16(weights=VGG16_Weights.DEFAULT)
-        elif conv_model_name == "squeezenet":
-            return squeezenet1_0(weights=SqueezeNet1_0_Weights.DEFAULT)
-        elif conv_model_name == "shufflenet":
-            return shufflenet_v2_x1_0(weights=ShuffleNet_V2_X1_0_Weights.DEFAULT)
-        elif conv_model_name == "mnasnet":
-            return mnasnet1_0(weights=MNASNet1_0_Weights.DEFAULT)
-        else:
-            raise ValueError("Invalid model name, exiting...")
-
-    def forward(self, x):
-        x = self.base_model(x)
-        x = self.flatten(x)
-        x = self.out_no_lands(x)
-
-        return x
-
-
 def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, initial_lr=INITIAL_LR, epochs=INITIAL_EPOCH, max_threads=MAX_THREADS):
     """
     Once the best hyperparameters are found using tune_hyperparameters(), call this function to train the model with the best hyperparameters found.
@@ -281,13 +158,10 @@ def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, 
     input_shape = (3, SQUARE_SIZE, SQUARE_SIZE)
     print("Class cnt: ", train_gen.per_class_cnt)
     class_weights = utils.get_class_weights(train_gen.per_class_cnt)
+    class_weights = torch.FloatTensor(class_weights).to(DEVICE)
     print("Class weights: ", class_weights)
 
-    model = CustomModel(
-        conv_model_name=conv_model,
-        input_shape=input_shape,
-        class_weights=class_weights,
-    )
+    model = models.EfficientNetB5(num_classes=NUM_CLASSES, class_weights=class_weights)
 
     # Train the model using torch
     history = pt_train.fit(
@@ -312,7 +186,7 @@ def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, 
 if __name__ == "__main__":
     # tune_hyperparameters()
     best_hp_dict = {
-        'batch_size': 16,
-        'conv_model': 'resnet101',
+        'batch_size': 8,
+        'conv_model': 'vit',
     }
     train(hp_dict=best_hp_dict, metric='val_acc', metric_mode='max', preprocess_again=True, initial_lr=INITIAL_LR, epochs=INITIAL_EPOCH, max_threads=MAX_THREADS)
