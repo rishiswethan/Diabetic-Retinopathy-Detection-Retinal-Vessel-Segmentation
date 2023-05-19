@@ -202,13 +202,15 @@ class DataGenerator(torch.utils.data.Dataset):
             augmentation=None,
             image_square_size=SQUARE_SIZE,
             shuffle=True,
-            verbose=False
+            verbose=False,
+            prob_apply_augmentation=1.0
     ):
         self.train_or_test = train_or_test
         self.image_square_size = image_square_size
         self.augmentation = augmentation
         self.shuffle = shuffle
         self.verbose = verbose
+        self.prob_apply_augmentation = prob_apply_augmentation
 
         assert self.train_or_test in ['train', 'test'], "train_or_test must be either 'train' or 'test'"
 
@@ -239,7 +241,10 @@ class DataGenerator(torch.utils.data.Dataset):
 
         image_path = self.image_label_path_generator.def_image_paths[actual_idx]
 
-        image, label = process_image(image_path, square_size=self.image_square_size, augmentation=self.augmentation)
+        if self.prob_apply_augmentation < random.random():
+            image, label = process_image(image_path, square_size=self.image_square_size, augmentation=self.augmentation)
+        else:
+            image, label = process_image(image_path, square_size=self.image_square_size, augmentation=None)
 
         if self.verbose:
             print("Image: ", image_path)

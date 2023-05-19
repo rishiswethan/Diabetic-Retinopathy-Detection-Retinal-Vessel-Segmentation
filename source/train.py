@@ -29,11 +29,12 @@ TRAIN_CALLBACK_OBJ_PATH = cf.TRAIN_CALLBACK_OBJ_PATH
 FULL_LABELS = cf.FULL_LABELS
 
 
-def get_data_generators(height=SQUARE_SIZE, width=SQUARE_SIZE, train_shuffle=True, val_shuffle=True):
+def get_data_generators(height=SQUARE_SIZE, width=SQUARE_SIZE, prob_apply_augmentation=1.0, train_shuffle=True, val_shuffle=True):
     train_gen = data_handling.DataGenerator(
         'train',
         augmentation=data_handling.get_training_augmentation(height=height, width=width),
         shuffle=train_shuffle,
+        prob_apply_augmentation=prob_apply_augmentation,
         verbose=False
     )
 
@@ -148,9 +149,10 @@ def train(hp_dict, metric='val_acc', metric_mode='max', preprocess_again=False, 
     print("Training hyperparameters: ", hp_dict)
     batch_size = hp_dict['batch_size']
     conv_model = hp_dict['conv_model']
+    prob_apply_augmentation = hp_dict['prob_apply_augmentation']
 
     # get and set generators
-    train_gen, val_gen = get_data_generators()
+    train_gen, val_gen = get_data_generators(prob_apply_augmentation=prob_apply_augmentation)
     train_loader = torch.utils.data.DataLoader(train_gen, batch_size=batch_size, shuffle=True, num_workers=MAX_THREADS)
     val_loader = torch.utils.data.DataLoader(val_gen, batch_size=batch_size, shuffle=False, num_workers=0)
 
@@ -202,7 +204,7 @@ def visualise_generator(hp_dict, data_loader, num_classes=NUM_CLASSES, full_labe
     model = torch.load(cf.MODEL_SAVE_PATH_BEST_VAL_LOSS).eval()
 
     # evaluate model on data_loader
-    print("Evaluating model on data_loader: ", data_loader)
+    print("Evaluating model on data_loader: ")
     results = pt_train._evaluate(model, data_loader)
     print("Results: ", results)
 
@@ -240,6 +242,7 @@ if __name__ == "__main__":
     best_hp_dict = {
         'batch_size': 8,
         'conv_model': 'vit',
+        "prob_apply_augmentation": 0.8,
     }
 
     train(hp_dict=best_hp_dict, metric='val_acc', metric_mode='max', preprocess_again=True, initial_lr=INITIAL_LR, epochs=INITIAL_EPOCH, max_threads=MAX_THREADS)

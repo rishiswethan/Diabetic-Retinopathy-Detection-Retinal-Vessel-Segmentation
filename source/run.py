@@ -9,6 +9,7 @@ if choice == '1':
     best_hp_dict = {
         'batch_size': 8,
         'conv_model': 'vit',
+        "prob_apply_augmentation": 0.8,
     }
     train.train(best_hp_dict)
 
@@ -16,5 +17,6 @@ elif choice == '2':
     best_hp_dict = {
         'batch_size': 8,
         'conv_model': 'vit',
+        "prob_apply_augmentation": 0.8,
     }
     train.visualise_generator(hp_dict=best_hp_dict, data_loader='val')
