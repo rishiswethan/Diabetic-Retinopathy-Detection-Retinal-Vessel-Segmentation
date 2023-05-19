@@ -30,7 +30,7 @@ class CustomModelBase(pt_train.CustomModelBase):
         images, labels = batch
 
         out = self(images)  # Generate predictions
-        loss = F.cross_entropy(out, labels, weight=self.class_weights)  # Calculate loss with class weights
+        loss = F.cross_entropy(out, labels, weight=None)  # We are not using class weights for validation since data is balanced in validation set
         acc = pt_train._accuracy(out, labels)  # Calculate accuracy
         return {'val_loss': loss.detach(), 'val_acc': acc}
 
@@ -200,7 +200,7 @@ class MobileNet_V3_Large(CustomModelBase):
 class ViT_B_16(CustomModelBase):
     def __init__(self, num_classes=2, class_weights=None):
         super(ViT_B_16, self).__init__(class_weights=class_weights)
-        self.model = models.vit_b_16(weights=None)
+        self.model = models.vit_l_16(weights=models.ViT_L_16_Weights.DEFAULT)
         self.model.heads = nn.Linear(self.model.heads[-1].in_features, num_classes)
 
     def forward(self, x):

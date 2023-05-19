@@ -19,45 +19,63 @@ SQUARE_SIZE = cf.SQUARE_SIZE
 
 def get_training_augmentation(height, width):
     def _get_training_augmentation(height, width):
+        """
+        RandomBrightnessContrast: Adjusts the brightness and contrast of the image randomly.
+
+        RGBShift: Changes the values of the RGB channels.
+
+        ChannelShuffle: Changes the order of the image channels.
+
+        CoarseDropout: Sets rectangular regions within the image to zero.
+
+        Cutout: Sets rectangular regions within the image to the mean pixel value.
+
+        GaussNoise: Adds Gaussian noise to the image.
+
+        ImageCompression: Decreases the quality of the image.
+
+        InvertImg: Inverts the colors of the image.
+
+        MedianBlur: Blurs the image using a median filter.
+
+        ToGray: Converts the image to grayscale.
+        """
+
+
         train_transform = [
+            albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
+
+            albu.IAAAdditiveGaussianNoise(p=0.6),
+
+            albu.CLAHE(p=0.6),
+            albu.RandomBrightness(p=0.6),
+            albu.RandomGamma(p=0.6),
+
+            albu.IAASharpen(p=0.6),
+            albu.Blur(blur_limit=3, p=0.6),
+            albu.MotionBlur(blur_limit=3, p=0.6),
+
+            albu.RandomContrast(p=0.6),
+            albu.HueSaturationValue(p=0.6),
+
+            albu.RandomBrightnessContrast(p=0.6),
+            albu.GaussNoise(p=0.6),
+            albu.MedianBlur(blur_limit=5, p=0.6),
+            albu.InvertImg(p=0.6),
+            albu.ToGray(p=0.6),
 
             # albu.HorizontalFlip(p=0.5),
-
+            # albu.VerticalFlip(p=0.5),
+            # albu.Rotate(limit=180, p=0.6),
+            # albu.IAAPerspective(p=0.5),
+            # albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7),
             # albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=0.75, border_mode=0),
             # albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=1),
-
-            albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
-            # albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7),
-
-            albu.IAAAdditiveGaussianNoise(p=0.3),
-            # albu.IAAPerspective(p=0.5),
-            # albu.Rotate(limit=60, p=1.0),
-
-            albu.OneOf(
-                [
-                    albu.CLAHE(p=1),
-                    albu.RandomBrightness(p=1),
-                    albu.RandomGamma(p=1),
-                ],
-                p=0.9,
-            ),
-
-            albu.OneOf(
-                [
-                    albu.IAASharpen(p=1),
-                    albu.Blur(blur_limit=3, p=1),
-                    albu.MotionBlur(blur_limit=3, p=1),
-                ],
-                p=0.9,
-            ),
-
-            albu.OneOf(
-                [
-                    albu.RandomContrast(p=1),
-                    albu.HueSaturationValue(p=1),
-                ],
-                p=0.9,
-            ),
+            # albu.RGBShift(p=0.6),
+            # albu.ChannelShuffle(p=0.6),
+            # albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=0.6),
+            # albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=0.6),
+            # albu.ImageCompression(quality_lower=99, quality_upper=100, p=0.6),
         ]
         return albu.Compose(train_transform)
 
@@ -201,7 +219,25 @@ class DataGenerator(torch.utils.data.Dataset):
         return len(self.image_label_path_generator)
 
     def __getitem__(self, idx):
-        image_path = next(self.image_label_path_generator)
+        # Compute the actual index
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is None:  # single-process data loading
+            actual_idx = idx
+        else:
+            # in a worker process
+            # This assumes that each worker gets an equal share of the data.
+            per_worker = len(self) // worker_info.num_workers
+            residual = len(self) % worker_info.num_workers
+            if worker_info.id < residual:
+                start_idx = (per_worker + 1) * worker_info.id
+            else:
+                start_idx = per_worker * worker_info.id + residual
+            actual_idx = start_idx + idx
+
+        if actual_idx >= len(self.image_label_path_generator):
+            actual_idx = random.randint(0, len(self.image_label_path_generator) - 1)
+
+        image_path = self.image_label_path_generator.def_image_paths[actual_idx]
 
         image, label = process_image(image_path, square_size=self.image_square_size, augmentation=self.augmentation)
 

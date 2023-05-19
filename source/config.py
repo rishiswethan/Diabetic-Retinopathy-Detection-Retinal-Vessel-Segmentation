@@ -1,5 +1,6 @@
 import os
 from torch import cuda
+import multiprocessing
 
 MAIN_PATH = str(os.path.dirname(os.path.abspath(__file__)).split('source')[0])  # folder outside source
 PROJECT_NAME = str(os.path.dirname(os.path.abspath(__file__)).split('source')[0]).split(os.sep)[-2]  # name of the project, i.e. folder name of the project
@@ -65,4 +66,5 @@ SQUARE_SIZE = 512  # size of the square image
 INITIAL_LR = 0.001
 INITIAL_EPOCH = 999999
 
-MAX_THREADS = 4
+# get unumber of CPUs available
+MAX_THREADS = multiprocessing.cpu_count() - 1
