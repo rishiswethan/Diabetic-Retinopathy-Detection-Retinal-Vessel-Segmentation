@@ -56,12 +56,13 @@ def get_data_generators(
         width=SQUARE_SIZE,
         prob_apply_augmentation=1.0,
         use_geometric_augmentation=True,
+        use_colour_augmentation=False,
         train_shuffle=True,
         val_shuffle=True
 ):
     train_gen = data_handling.DataGenerator(
         'train',
-        augmentation=data_handling.get_training_augmentation(height=height, width=width, use_geometric_aug=use_geometric_augmentation),
+        augmentation=data_handling.get_training_augmentation(height=height, width=width, use_geometric_aug=use_geometric_augmentation, use_colour_aug=use_colour_augmentation),
         shuffle=train_shuffle,
         prob_apply_augmentation=prob_apply_augmentation,
         verbose=False
@@ -209,6 +210,7 @@ def train(
     conv_model = hp_dict['conv_model']
     prob_apply_augmentation = hp_dict['prob_apply_augmentation']
     use_geometric_augmentation = hp_dict['use_geometric_augmentation']
+    use_colour_augmentation = hp_dict['use_colour_augmentation']
 
     # get callbacks based on given hyperparameters
     callbacks_func = get_callbacks(
@@ -220,7 +222,10 @@ def train(
     )
 
     # get and set generators
-    train_gen, val_gen = get_data_generators(prob_apply_augmentation=prob_apply_augmentation, use_geometric_augmentation=use_geometric_augmentation)
+    train_gen, val_gen = get_data_generators(prob_apply_augmentation=prob_apply_augmentation,
+                                             use_geometric_augmentation=use_geometric_augmentation,
+                                             use_colour_augmentation=use_colour_augmentation)
+
     train_loader = torch.utils.data.DataLoader(train_gen, batch_size=batch_size, shuffle=True, num_workers=MAX_THREADS)
     val_loader = torch.utils.data.DataLoader(val_gen, batch_size=batch_size, shuffle=False, num_workers=0)
 

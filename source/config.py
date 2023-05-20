@@ -98,6 +98,10 @@ TUNE_HP_RANGES = {
         [True, False],
         'choice'),
 
+    'use_colour_augmentation': (
+        [True, False],
+        'choice'),
+
     'conv_model': (_TUNING_MODELS_LIST, 'choice'),
 }
 TUNING_EARLY_STOPPING_PATIENCE = 10
