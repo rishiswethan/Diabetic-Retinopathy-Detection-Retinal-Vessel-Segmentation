@@ -262,7 +262,6 @@ class DataGenerator(torch.utils.data.Dataset):
             print("Image: ", image_path)
             print("Label: ", label)
 
-        # return image, label
         return torch.tensor(image, dtype=torch.float32), torch.tensor(label, dtype=torch.float32)
 
 
