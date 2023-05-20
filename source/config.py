@@ -37,7 +37,9 @@ TRAIN_CALLBACK_OBJ_PATH = MODELS_FOLDER + 'train_callback_obj.pkl'
 BEST_HP_JSON_SAVE_PATH = MODELS_FOLDER + 'best_hp.json'
 TUNER_CSV_SAVE_PATH = MODELS_FOLDER + 'tuner.csv'
 TUNER_SAVE_PATH = MODELS_FOLDER + 'tuner.pkl'
-TUNE_TARGET = 'val_loss'
+
+TRAIN_TUNE_TARGET = 'val_acc'  # metric to tune for
+TRAIN_TUNE_MODE = ['max', 'min'][0]  # acc is to be maximized, loss minimized, etc
 
 ######################################################################################################################################################
 # Training parameters
@@ -67,7 +69,7 @@ TUNE_HP_RANGES = {
         'choice'),
 
     'prob_apply_augmentation': (
-        [0.8, 0.9],
+        [0.8, 0.9, 1.0],
         'choice'),
 
     'reduce_lr_factor_val': (
@@ -112,7 +114,8 @@ ENABLE_VAL_LR_SCHEDULER = True
 REDUCE_LR_PATIENCE_VAL = 2
 REDUCE_LR_FACTOR_VAL = 0.2  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for early stopping
-EARLY_STOPPING_MONITOR = 'val_acc'
+EARLY_STOPPING_MONITOR = 'val_acc'  # 'val_acc', 'val_loss', 'train_acc', 'train_loss'
+EARLY_STOPPING_MONITOR_MODE = ['max', 'min'][0]
 EARLY_STOPPING_PATIENCE = 20
 
 NUM_CLASSES = len(FULL_LABELS)

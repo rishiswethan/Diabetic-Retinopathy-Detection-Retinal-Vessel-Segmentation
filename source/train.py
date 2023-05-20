@@ -32,7 +32,6 @@ TUNE_HP_RANGES = cf.TUNE_HP_RANGES
 BEST_HP_JSON_SAVE_PATH = cf.BEST_HP_JSON_SAVE_PATH
 TUNER_CSV_SAVE_PATH = cf.TUNER_CSV_SAVE_PATH
 TUNER_SAVE_PATH = cf.TUNER_SAVE_PATH
-TUNE_TARGET = cf.TUNE_TARGET
 MAX_TRIALS = cf.MAX_TRIALS
 
 REDUCE_LR_FACTOR_VAL = cf.REDUCE_LR_FACTOR_VAL
@@ -42,6 +41,9 @@ REDUCE_LR_PATIENCE_TRAIN = cf.REDUCE_LR_PATIENCE_TRAIN
 EARLY_STOPPING_PATIENCE = cf.EARLY_STOPPING_PATIENCE
 TUNING_EARLY_STOPPING_PATIENCE = cf.TUNING_EARLY_STOPPING_PATIENCE
 EARLY_STOPPING_MONITOR = cf.EARLY_STOPPING_MONITOR
+EARLY_STOPPING_MONITOR_MODE = cf.EARLY_STOPPING_MONITOR_MODE
+TRAIN_TUNE_TARGET = cf.TRAIN_TUNE_TARGET
+TRAIN_TUNE_MODE = cf.TRAIN_TUNE_MODE
 
 FULL_LABELS = cf.FULL_LABELS
 #############################################################################
@@ -92,6 +94,7 @@ def get_callbacks(
             model_save_path_best_train_loss=MODEL_SAVE_PATH_BEST_TRAIN_LOSS,
             training_stats_path_train=TRAIN_CALLBACK_OBJ_PATH,
             early_stopping_monitor=EARLY_STOPPING_MONITOR,
+            early_stopping_monitor_mode=EARLY_STOPPING_MONITOR_MODE
     ):
 
             if defined_callbacks is None:
@@ -137,7 +140,7 @@ def get_callbacks(
             )
             stop_flag = defined_callbacks['val'].early_stopping(
                 monitor_value=result[early_stopping_monitor],
-                mode='min',
+                mode=early_stopping_monitor_mode,
                 patience=early_stopping_patience,
                 indicator_text="Early stopping: "
             )
@@ -151,8 +154,8 @@ def get_callbacks(
 
 def train(
         hp_dict,
-        metric='val_acc',
-        metric_mode='max',
+        metric=TRAIN_TUNE_TARGET,
+        metric_mode=TRAIN_TUNE_MODE,
         initial_lr=INITIAL_LR,
         epochs=INITIAL_EPOCH,
         early_stopping_patience=EARLY_STOPPING_PATIENCE,
@@ -250,7 +253,7 @@ def train(
 
 
 def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
-                        tuning_early_stopping_patience=TUNING_EARLY_STOPPING_PATIENCE):
+                        early_stopping_patience=EARLY_STOPPING_PATIENCE):
     """
     Train the model using the best hyperparameters found using hyperopt
     """
@@ -259,7 +262,18 @@ def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
     best_hp = utils.load_dict_from_json(best_hp_json_save_path)
 
     # train using the best hyperparameters
-    train(best_hp, initial_visualise=True, early_stopping_patience=tuning_early_stopping_patience)
+    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience)
+
+
+def train_to_tune(hp_dict,
+                  tuning_early_stopping_patience=TUNING_EARLY_STOPPING_PATIENCE):
+    """
+    Train the model using the given hyperparameters. Used for tuning the hyperparameters.
+    """
+
+    # train using the given hyperparameters
+    return train(hp_dict, initial_visualise=False, early_stopping_patience=tuning_early_stopping_patience)
+
 
 
 def hyper_parameter_optimise(
@@ -267,7 +281,7 @@ def hyper_parameter_optimise(
         best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
         tuner_csv_save_path=TUNER_CSV_SAVE_PATH,
         tuner_obj_save_path=TUNER_SAVE_PATH,
-        tune_target=TUNE_TARGET,
+        tune_target=TRAIN_TUNE_TARGET,
         max_trials=MAX_TRIALS,
         load_if_exists=True,
 ):
@@ -318,7 +332,7 @@ def hyper_parameter_optimise(
         tune_target=tune_target,
         tune_hp_ranges=search_space,
         max_trials=max_trials,
-        train_function=train,
+        train_function=train_to_tune,
         load_if_exists=load_if_exists,
         seed=0
     )
