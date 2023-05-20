@@ -235,4 +235,3 @@ models_dict = {
     'mobilenet_v3_large': MobileNet_V3_Large,
     'vit_b_16': ViT_B_16
 }
-print(models_dict.keys())
