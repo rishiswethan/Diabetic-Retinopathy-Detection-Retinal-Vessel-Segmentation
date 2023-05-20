@@ -2,8 +2,7 @@ import os
 import shutil
 import warnings
 import numpy as np
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.utils.class_weight import compute_class_weight
+import json
 
 import config as cf
 
@@ -95,3 +94,25 @@ def get_class_weights(classes, normalize=True):
         class_weights = np.array(class_weights) / np.sum(class_weights)
 
     return class_weights
+
+
+def save_dict_as_json(file_name, dict, over_write=False):
+    if os.path.exists(file_name) and over_write:
+        with open(file_name) as f:
+            existing_dict = json.load(f)
+
+        existing_dict.update(dict)
+
+        with open(file_name, 'w') as f:
+            json.dump(existing_dict, f)
+    else:
+        with open(file_name, 'w') as f:
+            json.dump(dict, f)
+
+
+def load_dict_from_json(file_name):
+    with open(file_name) as f:
+        d = json.load(f)
+        # print(d)
+
+    return d

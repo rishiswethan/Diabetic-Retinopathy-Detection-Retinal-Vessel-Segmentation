@@ -34,8 +34,64 @@ VAL_CALLBACK_OBJ_PATH = MODELS_FOLDER + 'val_callback_obj.pkl'
 MODEL_SAVE_PATH_BEST_TRAIN_LOSS = MODELS_FOLDER + 'best_train_loss.pt'
 TRAIN_CALLBACK_OBJ_PATH = MODELS_FOLDER + 'train_callback_obj.pkl'
 
+BEST_HP_JSON_SAVE_PATH = MODELS_FOLDER + 'best_hp.json'
+TUNER_CSV_SAVE_PATH = MODELS_FOLDER + 'tuner.csv'
+TUNER_SAVE_PATH = MODELS_FOLDER + 'tuner.pkl'
+TUNE_TARGET = 'val_loss'
+
 ######################################################################################################################################################
 # Training parameters
+
+_TUNING_MODELS_LIST = [
+    'resnet18',
+    'resnet34',
+    'resnet50',
+    'resnet101',
+    'resnet152',
+    'inception',
+    'eff_b0',
+    'eff_b1',
+    'eff_b2',
+    'eff_b3',
+    'eff_b4',
+    'eff_b5',
+    'eff_v2_s',
+    'convnext_t',
+    'mobilenet_v3_small',
+    'mobilenet_v3_large',
+    'vit_b_16'
+]
+TUNE_HP_RANGES = {
+    'batch_size': (
+        [8],
+        'choice'),
+
+    'prob_apply_augmentation': (
+        [0.8, 0.85, 0.9, 0.95],
+        'choice'),
+
+    'reduce_lr_factor_val': (
+        [0.2, 0.4],
+        'choice'),
+
+    'reduce_lr_patience_val': (
+        [2, 4],
+        'choice'),
+
+    'reduce_lr_factor_train': (
+        [0.2],
+        'choice'),
+
+    'reduce_lr_patience_train': (
+        [5],
+        'choice'),
+
+    'use_geometric_augmentation': (
+        [True, False],
+        'choice'),
+
+    'conv_model': (_TUNING_MODELS_LIST, 'choice'),
+}
 
 FULL_LABELS = {
     0: 'No_DR',  # 1805 images
@@ -66,5 +122,15 @@ SQUARE_SIZE = 512  # size of the square image
 INITIAL_LR = 0.001
 INITIAL_EPOCH = 999999
 
-# get unumber of CPUs available
+# get number of CPUs available
 MAX_THREADS = multiprocessing.cpu_count() - 1
+
+######################################################################################################################################################
+
+# max_trails for tuning is currently set to the number of combinations of the above hyperparameters
+MAX_TRIALS = 1
+for key in TUNE_HP_RANGES.keys():
+    if TUNE_HP_RANGES[key][1] == 'range':
+        MAX_TRIALS *= TUNE_HP_RANGES[key][0][2]
+    else:
+        MAX_TRIALS *= len(TUNE_HP_RANGES[key][0])

@@ -1,22 +1,20 @@
 import train
 
 print("1) Train the model\n"
-      "2) Visualise the model on val set\n")
+      "2) Tune hyperparameters\n"
+      "3) Visualise the model on val set\n")
 choice = input("Enter your choice: ")
 
 if choice == '1':
     # train the model
-    best_hp_dict = {
-        'batch_size': 8,
-        'conv_model': 'vit',
-        "prob_apply_augmentation": 0.9,
-    }
-    train.train(best_hp_dict)
+    train.train_using_best_hp()
 
 elif choice == '2':
-    best_hp_dict = {
-        'batch_size': 8,
-        'conv_model': 'vit',
-        "prob_apply_augmentation": 0.8,
-    }
-    train.visualise_generator(hp_dict=best_hp_dict, data_loader='val')
+    # tune the hyperparameters
+    ch = input("1) Continue tuning\n"
+               "2) Start tuning from scratch\n")
+    train.hyper_parameter_optimise(load_if_exists=True if ch == '1' else False)
+
+elif choice == '3':
+    # visualise the model on val set, using the stored model
+    train.visualise_generator(data_loader='val')

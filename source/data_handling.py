@@ -17,7 +17,7 @@ DATA_FOLDERS = cf.DATA_FOLDERS
 SQUARE_SIZE = cf.SQUARE_SIZE
 
 
-def get_training_augmentation(height, width):
+def get_training_augmentation(height, width, use_geometric_aug=True):
     def _get_training_augmentation(height, width):
         """
         RandomBrightnessContrast: Adjusts the brightness and contrast of the image randomly.
@@ -48,49 +48,63 @@ def get_training_augmentation(height, width):
             albu.IAAAdditiveGaussianNoise(p=0.6),
 
             albu.CLAHE(p=0.6),
+
             albu.RandomBrightness(p=0.6),
+
             albu.RandomGamma(p=0.6),
 
             albu.IAASharpen(p=0.6),
+
             albu.Blur(blur_limit=3, p=0.6),
+
             albu.MotionBlur(blur_limit=3, p=0.6),
 
             albu.RandomContrast(p=0.6),
+
             albu.HueSaturationValue(p=0.6),
 
             albu.RandomBrightnessContrast(p=0.6),
+
             albu.GaussNoise(p=0.6),
+
             albu.MedianBlur(blur_limit=5, p=0.6),
+
             albu.InvertImg(p=0.6),
+
             albu.ToGray(p=0.6),
 
-            # albu.HorizontalFlip(p=0.5),
-            # albu.VerticalFlip(p=0.5),
-            # albu.Rotate(limit=180, p=0.6),
-            # albu.IAAPerspective(p=0.5),
-            # albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7),
-            # albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=0.75, border_mode=0),
-            # albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=1),
-            # albu.RGBShift(p=0.6),
-            # albu.ChannelShuffle(p=0.6),
-            # albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=0.6),
-            # albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=0.6),
-            # albu.ImageCompression(quality_lower=99, quality_upper=100, p=0.6),
+            # geometric transforms
+            albu.HorizontalFlip(p=0.5) if use_geometric_aug else None,
+
+            albu.VerticalFlip(p=0.5) if use_geometric_aug else None,
+
+            albu.Rotate(limit=180, p=0.6) if use_geometric_aug else None,
+
+            albu.IAAPerspective(p=0.5) if use_geometric_aug else None,
+
+            albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7) if use_geometric_aug else None,
+
+            albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=0.75, border_mode=0) if use_geometric_aug else None,
+
+            albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=1) if use_geometric_aug else None,
+
+            albu.RGBShift(p=0.6) if use_geometric_aug else None,
+
+            albu.ChannelShuffle(p=0.6) if use_geometric_aug else None,
+
+            albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=0.6) if use_geometric_aug else None,
+
+            albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=0.6) if use_geometric_aug else None,
+
+            albu.ImageCompression(quality_lower=99, quality_upper=100, p=0.6) if use_geometric_aug else None,
         ]
+
+        # remove None from list
+        train_transform = [i for i in train_transform if i is not None]
+
         return albu.Compose(train_transform)
 
     return _get_training_augmentation(height, width)
-
-
-def get_validation_augmentation(height, width):
-    def _get_validation_augmentation(height, width):
-        """Add paddings to make image shape divisible by 32"""
-        test_transform = [
-            albu.PadIfNeeded(height=height, width=width, always_apply=True, border_mode=0),
-        ]
-        return albu.Compose(test_transform)
-
-    return _get_validation_augmentation(height, width)
 
 
 def image_paths(dataset, train_or_test, data_folders=DATA_FOLDERS):

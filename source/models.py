@@ -84,6 +84,15 @@ class ResNet101(CustomModelBase):
     def forward(self, x):
         return self.model(x)
 
+class ResNet152(CustomModelBase):
+    def __init__(self, num_classes=2):
+        super(ResNet152, self).__init__()
+        self.model = models.resnet152(weights=models.ResNet152_Weights.DEFAULT)
+        self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
+
+    def forward(self, x):
+        return self.model(x)
+
 # 6.6M paramters
 # InceptionNet v1 - GoogLeNet
 class InceptionNet(CustomModelBase):
@@ -205,3 +214,25 @@ class ViT_B_16(CustomModelBase):
 
     def forward(self, x):
         return self.model(x)
+
+
+models_dict = {
+    'resnet18': ResNet18,
+    'resnet34': ResNet34,
+    'resnet50': ResNet50,
+    'resnet101': ResNet101,
+    'resnet152': ResNet152,
+    'inception': InceptionNet,
+    'eff_b0': EfficientNetB0,
+    'eff_b1': EfficientNetB1,
+    'eff_b2': EfficientNetB2,
+    'eff_b3': EfficientNetB3,
+    'eff_b4': EfficientNetB4,
+    'eff_b5': EfficientNetB5,
+    'eff_v2_s': EfficientNetV2_S,
+    'convnext_t': ConvNext_T,
+    'mobilenet_v3_small': MobileNet_V3_Small,
+    'mobilenet_v3_large': MobileNet_V3_Large,
+    'vit_b_16': ViT_B_16
+}
+print(models_dict.keys())
