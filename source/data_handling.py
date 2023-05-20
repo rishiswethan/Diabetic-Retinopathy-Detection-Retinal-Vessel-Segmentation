@@ -19,27 +19,6 @@ SQUARE_SIZE = cf.SQUARE_SIZE
 
 def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_aug=False, prob_each_aug=0.6):
     def _get_training_augmentation(height, width):
-        """
-        RandomBrightnessContrast: Adjusts the brightness and contrast of the image randomly.
-
-        RGBShift: Changes the values of the RGB channels.
-
-        ChannelShuffle: Changes the order of the image channels.
-
-        CoarseDropout: Sets rectangular regions within the image to zero.
-
-        Cutout: Sets rectangular regions within the image to the mean pixel value.
-
-        GaussNoise: Adds Gaussian noise to the image.
-
-        ImageCompression: Decreases the quality of the image.
-
-        InvertImg: Inverts the colors of the image.
-
-        MedianBlur: Blurs the image using a median filter.
-
-        ToGray: Converts the image to grayscale.
-        """
 
         train_transform = [
             # colour based transforms
