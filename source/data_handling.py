@@ -17,7 +17,7 @@ DATA_FOLDERS = cf.DATA_FOLDERS
 SQUARE_SIZE = cf.SQUARE_SIZE
 
 
-def get_training_augmentation(height, width, use_geometric_aug=True):
+def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_aug=False, prob_each_aug=0.6):
     def _get_training_augmentation(height, width):
         """
         RandomBrightnessContrast: Adjusts the brightness and contrast of the image randomly.
@@ -45,58 +45,56 @@ def get_training_augmentation(height, width, use_geometric_aug=True):
         train_transform = [
             albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
 
-            albu.IAAAdditiveGaussianNoise(p=0.6),
+            albu.IAAAdditiveGaussianNoise(p=prob_each_aug),
 
-            albu.CLAHE(p=0.6),
+            albu.CLAHE(p=prob_each_aug),
 
-            albu.RandomBrightness(p=0.6),
+            albu.RandomBrightness(p=prob_each_aug),
 
-            albu.RandomGamma(p=0.6),
+            albu.RandomGamma(p=prob_each_aug),
 
-            albu.IAASharpen(p=0.6),
+            albu.IAASharpen(p=prob_each_aug),
 
-            albu.Blur(blur_limit=3, p=0.6),
+            albu.Blur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
 
-            albu.MotionBlur(blur_limit=3, p=0.6),
+            albu.MotionBlur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
 
-            albu.RandomContrast(p=0.6),
+            albu.RandomContrast(p=prob_each_aug),
 
-            albu.HueSaturationValue(p=0.6),
+            albu.HueSaturationValue(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.RandomBrightnessContrast(p=0.6),
+            albu.RandomBrightnessContrast(p=prob_each_aug),
 
-            albu.GaussNoise(p=0.6),
+            albu.GaussNoise(p=prob_each_aug),
 
-            albu.MedianBlur(blur_limit=5, p=0.6),
+            albu.MedianBlur(blur_limit=5, p=prob_each_aug) if use_colour_aug else None,
 
-            albu.InvertImg(p=0.6),
+            albu.InvertImg(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.ToGray(p=0.6),
+            albu.ToGray(p=prob_each_aug) if use_colour_aug else None,
 
             # geometric transforms
-            albu.HorizontalFlip(p=0.5) if use_geometric_aug else None,
+            albu.HorizontalFlip(p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.VerticalFlip(p=0.5) if use_geometric_aug else None,
+            albu.VerticalFlip(p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.Rotate(limit=180, p=0.6) if use_geometric_aug else None,
+            albu.Rotate(limit=180, p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.IAAPerspective(p=0.5) if use_geometric_aug else None,
+            albu.IAAPerspective(p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7) if use_geometric_aug else None,
+            albu.RandomCrop(height=height, width=width, always_apply=True, p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=0.75, border_mode=0) if use_geometric_aug else None,
+            albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=prob_each_aug, border_mode=0) if use_geometric_aug else None,
 
-            albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=1) if use_geometric_aug else None,
+            albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.RGBShift(p=0.6) if use_geometric_aug else None,
+            albu.RGBShift(p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.ChannelShuffle(p=0.6) if use_geometric_aug else None,
+            albu.ChannelShuffle(p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=0.6) if use_geometric_aug else None,
+            albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=prob_each_aug) if use_geometric_aug else None,
 
-            albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=0.6) if use_geometric_aug else None,
-
-            albu.ImageCompression(quality_lower=99, quality_upper=100, p=0.6) if use_geometric_aug else None,
+            albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=prob_each_aug) if use_geometric_aug else None,
         ]
 
         # remove None from list
