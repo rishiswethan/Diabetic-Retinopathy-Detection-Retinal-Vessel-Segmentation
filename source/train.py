@@ -35,6 +35,14 @@ TUNER_SAVE_PATH = cf.TUNER_SAVE_PATH
 TUNE_TARGET = cf.TUNE_TARGET
 MAX_TRIALS = cf.MAX_TRIALS
 
+REDUCE_LR_FACTOR_VAL = cf.REDUCE_LR_FACTOR_VAL
+REDUCE_LR_PATIENCE_VAL = cf.REDUCE_LR_PATIENCE_VAL
+REDUCE_LR_FACTOR_TRAIN = cf.REDUCE_LR_FACTOR_TRAIN
+REDUCE_LR_PATIENCE_TRAIN = cf.REDUCE_LR_PATIENCE_TRAIN
+EARLY_STOPPING_PATIENCE = cf.EARLY_STOPPING_PATIENCE
+TUNING_EARLY_STOPPING_PATIENCE = cf.TUNING_EARLY_STOPPING_PATIENCE
+EARLY_STOPPING_MONITOR = cf.EARLY_STOPPING_MONITOR
+
 FULL_LABELS = cf.FULL_LABELS
 #############################################################################
 
@@ -66,10 +74,11 @@ def get_data_generators(
 
 
 def get_callbacks(
-       reduce_lr_factor_val=cf.REDUCE_LR_FACTOR_VAL,
-       reduce_lr_patience_val=cf.REDUCE_LR_PATIENCE_VAL,
-       reduce_lr_factor_train=cf.REDUCE_LR_FACTOR_TRAIN,
-       reduce_lr_patience_train=cf.REDUCE_LR_PATIENCE_TRAIN,
+       reduce_lr_factor_val=REDUCE_LR_FACTOR_VAL,
+       reduce_lr_patience_val=REDUCE_LR_PATIENCE_VAL,
+       reduce_lr_factor_train=REDUCE_LR_FACTOR_TRAIN,
+       reduce_lr_patience_train=REDUCE_LR_PATIENCE_TRAIN,
+       early_stopping_patience=EARLY_STOPPING_PATIENCE,
 ):
     def _get_callbacks(
             optimiser,
@@ -82,8 +91,7 @@ def get_callbacks(
             training_stats_path_val=VAL_CALLBACK_OBJ_PATH,
             model_save_path_best_train_loss=MODEL_SAVE_PATH_BEST_TRAIN_LOSS,
             training_stats_path_train=TRAIN_CALLBACK_OBJ_PATH,
-            early_stopping_monitor=cf.EARLY_STOPPING_MONITOR,
-            early_stopping_patience=cf.EARLY_STOPPING_PATIENCE,
+            early_stopping_monitor=EARLY_STOPPING_MONITOR,
     ):
 
             if defined_callbacks is None:
@@ -147,6 +155,9 @@ def train(
         metric_mode='max',
         initial_lr=INITIAL_LR,
         epochs=INITIAL_EPOCH,
+        early_stopping_patience=EARLY_STOPPING_PATIENCE,
+        num_classes=NUM_CLASSES,
+        device_name=DEVICE,
         initial_visualise=False
 ):
     """
@@ -197,6 +208,7 @@ def train(
         reduce_lr_patience_val=hp_dict['reduce_lr_patience_val'],
         reduce_lr_factor_train=hp_dict['reduce_lr_factor_train'],
         reduce_lr_patience_train=hp_dict['reduce_lr_patience_train'],
+        early_stopping_patience=early_stopping_patience,
     )
 
     # get and set generators
@@ -205,13 +217,12 @@ def train(
     val_loader = torch.utils.data.DataLoader(val_gen, batch_size=batch_size, shuffle=False, num_workers=0)
 
     # Create the model
-    input_shape = (3, SQUARE_SIZE, SQUARE_SIZE)
     print("Class cnt: ", train_gen.per_class_cnt)
     class_weights = utils.get_class_weights(train_gen.per_class_cnt)
-    class_weights = torch.FloatTensor(class_weights).to(DEVICE)
+    class_weights = torch.FloatTensor(class_weights).to(device_name)
     print("Class weights: ", class_weights)
 
-    model = models.models_dict[conv_model](num_classes=NUM_CLASSES, class_weights=class_weights)
+    model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
     model.to(DEVICE)
 
     # visualise training set and model
@@ -238,7 +249,8 @@ def train(
         return opt_result
 
 
-def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH):
+def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
+                        tuning_early_stopping_patience=TUNING_EARLY_STOPPING_PATIENCE):
     """
     Train the model using the best hyperparameters found using hyperopt
     """
@@ -247,7 +259,7 @@ def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH):
     best_hp = utils.load_dict_from_json(best_hp_json_save_path)
 
     # train using the best hyperparameters
-    train(best_hp, initial_visualise=True)
+    train(best_hp, initial_visualise=True, early_stopping_patience=tuning_early_stopping_patience)
 
 
 def hyper_parameter_optimise(
@@ -334,7 +346,7 @@ def hyper_parameter_optimise(
     # Our pt_utils.hyper_tuner class will save the best hyperparameters to a json file after each trial
 
 
-def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, model=None):
+def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, model=None, model_save_path=MODEL_SAVE_PATH_BEST_VAL_LOSS):
     if type(data_loader) == str:
         if data_loader == 'train':
             data_generator = get_data_generators()[0]
@@ -347,7 +359,7 @@ def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, m
         data_loader = torch.utils.data.DataLoader(data_generator, batch_size=1, shuffle=False, num_workers=0)
 
     if model is None:
-        model = torch.load(cf.MODEL_SAVE_PATH_BEST_VAL_LOSS).eval()
+        model = torch.load(model_save_path).eval()
 
     model.eval()
     # evaluate model on data_loader

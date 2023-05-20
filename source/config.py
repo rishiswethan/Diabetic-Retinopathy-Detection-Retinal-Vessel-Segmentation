@@ -43,23 +43,23 @@ TUNE_TARGET = 'val_loss'
 # Training parameters
 
 _TUNING_MODELS_LIST = [
-    'resnet18',
+    # 'resnet18',
     'resnet34',
-    'resnet50',
-    'resnet101',
+    # 'resnet50',
+    # 'resnet101',
     'resnet152',
-    'inception',
-    'eff_b0',
+    # 'inception',
+    # 'eff_b0',
     'eff_b1',
-    'eff_b2',
+    # 'eff_b2',
     'eff_b3',
-    'eff_b4',
-    'eff_b5',
+    # 'eff_b4',
+    # 'eff_b5',
     'eff_v2_s',
-    'convnext_t',
-    'mobilenet_v3_small',
-    'mobilenet_v3_large',
-    'vit_b_16'
+    # 'convnext_t',
+    # 'mobilenet_v3_small',
+    # 'mobilenet_v3_large',
+    # 'vit_b_16'
 ]
 TUNE_HP_RANGES = {
     'batch_size': (
@@ -67,7 +67,7 @@ TUNE_HP_RANGES = {
         'choice'),
 
     'prob_apply_augmentation': (
-        [0.8, 0.85, 0.9, 0.95],
+        [0.8, 0.9],
         'choice'),
 
     'reduce_lr_factor_val': (
@@ -92,6 +92,7 @@ TUNE_HP_RANGES = {
 
     'conv_model': (_TUNING_MODELS_LIST, 'choice'),
 }
+TUNING_EARLY_STOPPING_PATIENCE = 10
 
 FULL_LABELS = {
     0: 'No_DR',  # 1805 images
