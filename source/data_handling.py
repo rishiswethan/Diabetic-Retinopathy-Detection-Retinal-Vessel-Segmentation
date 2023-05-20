@@ -41,7 +41,6 @@ def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_
         ToGray: Converts the image to grayscale.
         """
 
-
         train_transform = [
             # colour based transforms
             albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
