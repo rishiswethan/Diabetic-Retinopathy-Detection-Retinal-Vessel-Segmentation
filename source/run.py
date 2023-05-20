@@ -1,4 +1,4 @@
-import train
+import source.train as train
 
 print("1) Train the model\n"
       "2) Tune hyperparameters\n"

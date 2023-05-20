@@ -1,3 +1,5 @@
+import gc
+
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -187,6 +189,9 @@ def train(
         The best value of the metric found during training. This is the value that will be used to find the best hyperparameters.
     """
 
+    torch.cuda.empty_cache()
+    gc.collect()
+
     def get_min_max_vale(history, key):
         min = 99999
         max = -99999
@@ -224,13 +229,18 @@ def train(
     class_weights = utils.get_class_weights(train_gen.per_class_cnt)
     class_weights = torch.FloatTensor(class_weights).to(device_name)
     print("Class weights: ", class_weights)
+    print("Num train images: ", len(train_gen))
+    print("Num val images: ", len(val_gen))
 
     model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
-    model.to(DEVICE)
+    model.to(device_name)
 
     # visualise training set and model
     if initial_visualise:
-        visualise_generator(train_loader, num_images=3, model=model)
+        visualise_generator(train_loader, num_images=3, model=model, run_evaluation=False)
+
+    print("_________________________________________________________________________________________________")
+    print("Training model: ", conv_model, "\n")
 
     # Train the model using torch
     history = pt_train.fit(
@@ -360,7 +370,7 @@ def hyper_parameter_optimise(
     # Our pt_utils.hyper_tuner class will save the best hyperparameters to a json file after each trial
 
 
-def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, model=None, model_save_path=MODEL_SAVE_PATH_BEST_VAL_LOSS):
+def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, model=None, model_save_path=MODEL_SAVE_PATH_BEST_VAL_LOSS, run_evaluation=True):
     if type(data_loader) == str:
         if data_loader == 'train':
             data_generator = get_data_generators()[0]
@@ -374,12 +384,14 @@ def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, m
 
     if model is None:
         model = torch.load(model_save_path).eval()
-
     model.eval()
+    model.to(DEVICE)
+
     # evaluate model on data_loader
-    print("Evaluating model on data_loader: ")
-    results = pt_train._evaluate(model, data_loader)
-    print("Results: ", results)
+    if run_evaluation:
+        print("Evaluating model on data_loader: ")
+        results = pt_train._evaluate(model, data_loader)
+        print("Results: ", results)
 
     cnt = 0
     for batch in data_loader:

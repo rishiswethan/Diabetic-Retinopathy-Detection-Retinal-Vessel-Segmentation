@@ -21,12 +21,18 @@ DATA_FOLDERS = {
 }
 
 APTOS2019 = "aptos2019-blindness-detection"
+IDRID = "IDRiD"
+EyePACS = "EyePACS"
 
 DATASETS_IN_USE = [
-    APTOS2019
+    APTOS2019,
+    IDRID,
+    EyePACS
 ]
 TEST_DATASETS = [
-    APTOS2019
+    APTOS2019,
+    IDRID,
+    EyePACS
 ]
 
 MODEL_SAVE_PATH_BEST_VAL_LOSS = MODELS_FOLDER + 'best_val_loss.pt'

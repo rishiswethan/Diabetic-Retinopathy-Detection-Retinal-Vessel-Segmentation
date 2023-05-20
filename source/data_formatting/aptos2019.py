@@ -3,8 +3,8 @@ import random
 import shutil
 import csv
 
-import utils
-import config
+import source.utils as utils
+import source.config as config
 
 
 def correct_file_names(original_all_folders_path, training_all_folder_path):
