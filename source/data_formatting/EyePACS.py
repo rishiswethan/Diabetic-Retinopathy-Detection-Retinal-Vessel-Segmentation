@@ -102,27 +102,27 @@ def split_train_test(all_folders_path, split_per):
     # copy the first max_test_images to the train folder. Make sure to copy both the left and right images
     for folder in all_folders:
         all_images = os.listdir(all_folders_path + folder)
-        random.shuffle(all_images)
+
+        # find unique images
+        unique_images = []
+        for image in all_images:
+            if image.split("_")[0] not in unique_images:
+                unique_images.append(image.split("_")[0])
+
+        random.shuffle(unique_images)
+        copied_image_names = []
 
         # copy the first max_test_images to the test folder. Make sure to copy both the left and right images
-        copied_image_names = []
-        for image in all_images[max_test_images:]:
+        for image in unique_images[max_test_images:]:
             # if the image has already been copied, then skip it
             if image in copied_image_names:
                 continue
 
             print("Image: ", image)
 
-            right_or_left = image.split("_")[1]
-            right_or_left = right_or_left.split("-")[0]
-
-            # if the image is a right image, then copy the left image as well
-            if right_or_left == "right":
-                right_image = image
-                left_image = image.replace("right", "left")
-            elif right_or_left == "left":
-                left_image = image
-                right_image = image.replace("left", "right")
+            # get the left and right image names
+            right_image = image + f"_right-{folder}.jpeg"
+            left_image = image + f"_left-{folder}.jpeg"
 
             # copy the right image
             if os.path.exists(all_folders_path + folder + os.sep + right_image):
@@ -130,7 +130,7 @@ def split_train_test(all_folders_path, split_per):
                     all_folders_path + folder + os.sep + right_image,
                     train_folder + os.sep + right_image
                 )
-                copied_image_names.append(right_image)
+                copied_image_names.append(image)
 
             # copy the left image
             if os.path.exists(all_folders_path + folder + os.sep + left_image):
@@ -138,32 +138,20 @@ def split_train_test(all_folders_path, split_per):
                     all_folders_path + folder + os.sep + left_image,
                     train_folder + os.sep + left_image
                 )
-                copied_image_names.append(left_image)
+                copied_image_names.append(image)
 
-    # copy the remaining images to the test folder
-    for folder in all_folders:
-        all_images = os.listdir(all_folders_path + folder)
-        random.shuffle(all_images)
-
-        # copy the first max_test_images to the test folder. Make sure to copy both the left and right images
-        copied_image_names = []
-        for image in all_images[:max_test_images]:
+        # copy the remaining to the test folder. Make sure to copy both the left and right images
+        for image in unique_images[:max_test_images]:
             # if the image has already been copied, then skip it
             if image in copied_image_names:
+                print("Image already copied: ", image)
                 continue
 
             print("Image: ", image)
 
-            right_or_left = image.split("_")[1]
-            right_or_left = right_or_left.split("-")[0]
-
-            # if the image is a right image, then copy the left image as well
-            if right_or_left == "right":
-                right_image = image
-                left_image = image.replace("right", "left")
-            elif right_or_left == "left":
-                left_image = image
-                right_image = image.replace("left", "right")
+            # get the left and right image names
+            right_image = image + f"_right-{folder}.jpeg"
+            left_image = image + f"_left-{folder}.jpeg"
 
             # copy the right image
             if os.path.exists(all_folders_path + folder + os.sep + right_image):
@@ -171,7 +159,7 @@ def split_train_test(all_folders_path, split_per):
                     all_folders_path + folder + os.sep + right_image,
                     test_folder + os.sep + right_image
                 )
-                copied_image_names.append(right_image)
+                copied_image_names.append(image)
 
             # copy the left image
             if os.path.exists(all_folders_path + folder + os.sep + left_image):
@@ -179,9 +167,31 @@ def split_train_test(all_folders_path, split_per):
                     all_folders_path + folder + os.sep + left_image,
                     test_folder + os.sep + left_image
                 )
-                copied_image_names.append(left_image)
+                copied_image_names.append(image)
 
 
+def audit_train_and_test_images(train_images_folder, test_images_folder):
+    """
+    Audit the train and test images to make sure that there are no duplicates
+    """
+
+    # get a list of all the images in the train and test folders
+    train_images = os.listdir(train_images_folder)
+    train_images = [image.split("_")[0] + "-" + image.split("-")[-2].split(".")[0]
+                    for image in train_images]
+
+    test_images = os.listdir(test_images_folder)
+    test_images = [image.split("_")[0] + "-" + image.split("-")[-2].split(".")[0]
+                     for image in test_images]
+
+    # find the duplicates
+    duplicates = []
+    for image in train_images:
+        print("Image: ", image)
+        if image in test_images:
+            duplicates.append(image)
+
+    print("Duplicates: ", duplicates)
 
 
 if __name__ == "__main__":
@@ -190,4 +200,7 @@ if __name__ == "__main__":
     #                    config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep,
     #                    img_name_prefix="")
 
-    split_train_test(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "all" + os.sep, 0.2)
+    # split_train_test(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "all" + os.sep, 0.2)
+
+    audit_train_and_test_images(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "train" + os.sep,
+                                config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "test" + os.sep)
