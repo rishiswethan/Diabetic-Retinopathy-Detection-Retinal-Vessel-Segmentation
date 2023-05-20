@@ -290,7 +290,6 @@ def train_to_tune(hp_dict,
     return train(hp_dict, initial_visualise=False, early_stopping_patience=tuning_early_stopping_patience)
 
 
-
 def hyper_parameter_optimise(
         search_space=TUNE_HP_RANGES,
         best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
