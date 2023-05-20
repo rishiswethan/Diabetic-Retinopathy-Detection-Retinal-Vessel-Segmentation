@@ -43,29 +43,30 @@ def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_
 
 
         train_transform = [
+            # colour based transforms
             albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
 
-            albu.IAAAdditiveGaussianNoise(p=prob_each_aug),
+            albu.IAAAdditiveGaussianNoise(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.CLAHE(p=prob_each_aug),
+            albu.CLAHE(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.RandomBrightness(p=prob_each_aug),
+            albu.RandomBrightness(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.RandomGamma(p=prob_each_aug),
+            albu.RandomGamma(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.IAASharpen(p=prob_each_aug),
+            albu.IAASharpen(p=prob_each_aug) if use_colour_aug else None,
 
             albu.Blur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
 
             albu.MotionBlur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
 
-            albu.RandomContrast(p=prob_each_aug),
+            albu.RandomContrast(p=prob_each_aug) if use_colour_aug else None,
 
             albu.HueSaturationValue(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.RandomBrightnessContrast(p=prob_each_aug),
+            albu.RandomBrightnessContrast(p=prob_each_aug) if use_colour_aug else None,
 
-            albu.GaussNoise(p=prob_each_aug),
+            albu.GaussNoise(p=prob_each_aug) if use_colour_aug else None,
 
             albu.MedianBlur(blur_limit=5, p=prob_each_aug) if use_colour_aug else None,
 
