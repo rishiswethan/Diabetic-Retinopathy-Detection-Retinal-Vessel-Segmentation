@@ -1,0 +1,1 @@
+{"batch_size": 16, "conv_model": "eff_b3", "prob_apply_augmentation": 0.9, "reduce_lr_factor_train": 0.2, "reduce_lr_factor_val": 0.4, "reduce_lr_patience_train": 5, "reduce_lr_patience_val": 2, "use_geometric_augmentation": true, "use_colour_augmentation": false, "val_acc": 0.7222222089767456}
