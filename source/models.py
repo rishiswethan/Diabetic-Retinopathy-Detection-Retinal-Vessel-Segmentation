@@ -37,8 +37,8 @@ class CustomModelBase(pt_train.CustomModelBase):
 
 # 57M parameters
 class AlexNet(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(AlexNet, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(AlexNet, self).__init__(class_weights=class_weights)
         self.model = models.alexnet(weights=models.AlexNet_Weights.DEFAULT)
         self.model.classifier[-1] = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
@@ -47,8 +47,8 @@ class AlexNet(CustomModelBase):
 
 # 11M paramters
 class ResNet18(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(ResNet18, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNet18, self).__init__(class_weights=class_weights)
         self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
 
@@ -57,8 +57,8 @@ class ResNet18(CustomModelBase):
 
 # 21M paramters
 class ResNet34(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(ResNet34, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNet34, self).__init__(class_weights=class_weights)
         self.model = models.resnet34(weights=models.ResNet34_Weights.DEFAULT)
         self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
 
@@ -66,8 +66,8 @@ class ResNet34(CustomModelBase):
         return self.model(x)
 
 class ResNet50(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(ResNet50, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNet50, self).__init__(class_weights=class_weights)
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
 
@@ -76,8 +76,8 @@ class ResNet50(CustomModelBase):
 
 # 42M paramters
 class ResNet101(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(ResNet101, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNet101, self).__init__(class_weights=class_weights)
         self.model = models.resnet101(weights=models.ResNet101_Weights.DEFAULT)
         self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
 
@@ -85,8 +85,8 @@ class ResNet101(CustomModelBase):
         return self.model(x)
 
 class ResNet152(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(ResNet152, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNet152, self).__init__(class_weights=class_weights)
         self.model = models.resnet152(weights=models.ResNet152_Weights.DEFAULT)
         self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
 
@@ -106,8 +106,8 @@ class InceptionNet(CustomModelBase):
 
 # 4M parameters
 class EfficientNetB0(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(EfficientNetB0, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(EfficientNetB0, self).__init__(class_weights=class_weights)
         self.model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
         self.model.classifier = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
@@ -116,8 +116,8 @@ class EfficientNetB0(CustomModelBase):
 
 # 6M parameters
 class EfficientNetB1(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(EfficientNetB1, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(EfficientNetB1, self).__init__(class_weights=class_weights)
         self.model = models.efficientnet_b1(weights=models.EfficientNet_B1_Weights.DEFAULT)
         self.model.classifier = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
@@ -167,8 +167,8 @@ class EfficientNetB5(CustomModelBase):
 
 # 20M paramters
 class EfficientNetV2_S(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(EfficientNetV2_S, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(EfficientNetV2_S, self).__init__(class_weights=class_weights)
         self.model = models.efficientnet_v2_s(weights=models.EfficientNet_V2_S_Weights.DEFAULT)
         self.model.classifier = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
@@ -177,8 +177,8 @@ class EfficientNetV2_S(CustomModelBase):
 
 # 27M parameters
 class ConvNext_T(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(ConvNext_T, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ConvNext_T, self).__init__(class_weights=class_weights)
         self.model = models.convnext_tiny(weights=models.ConvNeXt_Tiny_Weights.DEFAULT)
         self.model.classifier[-1] = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
@@ -187,8 +187,8 @@ class ConvNext_T(CustomModelBase):
 
 # 1.5M paramters
 class MobileNet_V3_Small(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(MobileNet_V3_Small, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(MobileNet_V3_Small, self).__init__(class_weights=class_weights)
         self.model = models.mobilenet_v3_small(weights=models.MobileNet_V3_Small_Weights.DEFAULT)
         self.model.classifier[-1] = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
@@ -197,8 +197,8 @@ class MobileNet_V3_Small(CustomModelBase):
 
 # 4.2M paramters
 class MobileNet_V3_Large(CustomModelBase):
-    def __init__(self, num_classes=2):
-        super(MobileNet_V3_Large, self).__init__()
+    def __init__(self, num_classes=2, class_weights=None):
+        super(MobileNet_V3_Large, self).__init__(class_weights=class_weights)
         self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.DEFAULT)
         self.model.classifier[-1] = nn.Linear(self.model.classifier[-1].in_features, num_classes, bias=True)
 
