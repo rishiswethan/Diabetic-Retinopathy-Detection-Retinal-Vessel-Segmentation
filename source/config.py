@@ -23,16 +23,22 @@ DATA_FOLDERS = {
 APTOS2019 = "aptos2019-blindness-detection"
 IDRID = "IDRiD"
 EyePACS = "EyePACS"
+EyePACS_test = "EyePACS_test"  # there are more test images than train images in EyePACS
+SUSTech = "SUSTech"
 
 DATASETS_IN_USE = [
     APTOS2019,
     IDRID,
-    EyePACS
+    SUSTech,
+    EyePACS,
+    EyePACS_test
 ]
 TEST_DATASETS = [
     APTOS2019,
     IDRID,
-    EyePACS
+    SUSTech,
+    # EyePACS,
+    # EyePACS_test
 ]
 
 MODEL_SAVE_PATH_BEST_VAL_LOSS = MODELS_FOLDER + 'best_val_loss.pt'
@@ -52,18 +58,18 @@ TRAIN_TUNE_MODE = ['max', 'min'][0]  # acc is to be maximized, loss minimized, e
 
 _TUNING_MODELS_LIST = [
     # 'resnet18',
-    'resnet34',
+    # 'resnet34',
     # 'resnet50',
     # 'resnet101',
-    'resnet152',
+    # 'resnet152',
     # 'inception',
     # 'eff_b0',
-    'eff_b1',
+    # 'eff_b1',
     # 'eff_b2',
     'eff_b3',
     # 'eff_b4',
     # 'eff_b5',
-    'eff_v2_s',
+    # 'eff_v2_s',
     # 'convnext_t',
     # 'mobilenet_v3_small',
     # 'mobilenet_v3_large',
@@ -75,15 +81,15 @@ TUNE_HP_RANGES = {
         'choice'),
 
     'prob_apply_augmentation': (
-        [0.8, 0.9, 1.0],
+        [0.9],
         'choice'),
 
     'reduce_lr_factor_val': (
-        [0.2, 0.4],
+        [0.5],
         'choice'),
 
     'reduce_lr_patience_val': (
-        [2, 4],
+        [10],
         'choice'),
 
     'reduce_lr_factor_train': (

@@ -1,4 +1,6 @@
 import gc
+import os
+
 
 import numpy as np
 import torch
@@ -63,6 +65,7 @@ def get_data_generators(
     train_gen = data_handling.DataGenerator(
         'train',
         augmentation=data_handling.get_training_augmentation(height=height, width=width, use_geometric_aug=use_geometric_augmentation, use_colour_aug=use_colour_augmentation),
+        # augmentation=None,
         shuffle=train_shuffle,
         prob_apply_augmentation=prob_apply_augmentation,
         verbose=False
@@ -121,16 +124,16 @@ def get_callbacks(
                 indicator_text="Val LR scheduler: "
             )
             defined_callbacks['train'].reduce_lr_on_plateau(
-                monitor_value=result["train_loss"],
-                mode='min',
+                monitor_value=result["train_acc"],
+                mode='max',
                 factor=reduce_lr_factor_train,
                 patience=reduce_lr_patience_train,
                 indicator_text="Train LR scheduler: "
             )
             defined_callbacks['train'].model_checkpoint(
                 model=model,
-                monitor_value=result["train_loss"],
-                mode='min',
+                monitor_value=result["train_acc"],
+                mode='max',
                 other_stats=other_stats,
                 indicator_text="Train checkpoint: "
             )
@@ -164,7 +167,9 @@ def train(
         early_stopping_patience=EARLY_STOPPING_PATIENCE,
         num_classes=NUM_CLASSES,
         device_name=DEVICE,
-        initial_visualise=False
+        initial_visualise=False,
+        continue_training=True,
+        model_save_path=MODEL_SAVE_PATH_BEST_TRAIN_LOSS,
 ):
     """
     Once the best hyperparameters are found using tune_hyperparameters(), call this function to train the model with the best hyperparameters found.
@@ -190,9 +195,6 @@ def train(
         The best value of the metric found during training. This is the value that will be used to find the best hyperparameters.
     """
 
-    torch.cuda.empty_cache()
-    gc.collect()
-
     def get_min_max_vale(history, key):
         min = 99999
         max = -99999
@@ -203,6 +205,10 @@ def train(
                 max = history[i][key]
 
         return min, max
+
+    # Clear memory before training
+    torch.cuda.empty_cache()
+    gc.collect()
 
     # Train hyperparameters
     print("Training hyperparameters: ", hp_dict)
@@ -237,12 +243,15 @@ def train(
     print("Num train images: ", len(train_gen))
     print("Num val images: ", len(val_gen))
 
-    model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
+    if continue_training:
+        model = torch.load(model_save_path)
+    else:
+        model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
     model.to(device_name)
 
     # visualise training set and model
     if initial_visualise:
-        visualise_generator(train_loader, num_images=3, model=model, run_evaluation=False)
+        visualise_generator(train_loader, num_images=3, model=model, run_evaluation=False, val_batch_size=batch_size)
 
     print("_________________________________________________________________________________________________")
     print("Training model: ", conv_model, "\n")
@@ -268,7 +277,8 @@ def train(
 
 
 def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
-                        early_stopping_patience=EARLY_STOPPING_PATIENCE):
+                        early_stopping_patience=EARLY_STOPPING_PATIENCE,
+                        continue_training=True):
     """
     Train the model using the best hyperparameters found using hyperopt
     """
@@ -277,7 +287,7 @@ def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
     best_hp = utils.load_dict_from_json(best_hp_json_save_path)
 
     # train using the best hyperparameters
-    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience)
+    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience, continue_training=continue_training)
 
 
 def train_to_tune(hp_dict,
@@ -374,7 +384,16 @@ def hyper_parameter_optimise(
     # Our pt_utils.hyper_tuner class will save the best hyperparameters to a json file after each trial
 
 
-def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, model=None, model_save_path=MODEL_SAVE_PATH_BEST_VAL_LOSS, run_evaluation=True):
+def visualise_generator(
+        data_loader,
+        full_labels=FULL_LABELS,
+        num_images=None,
+        model=None,
+        model_save_path=MODEL_SAVE_PATH_BEST_VAL_LOSS,
+        run_evaluation=False,
+        val_batch_size=8,
+        device=DEVICE,
+):
     if type(data_loader) == str:
         if data_loader == 'train':
             data_generator = get_data_generators()[0]
@@ -384,16 +403,16 @@ def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, m
         raise TypeError("data_loader must be of type str or torch.utils.data.DataLoader, or \"train\" or \"val\"")
 
     if type(data_loader) != torch.utils.data.DataLoader:
-        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=1, shuffle=False, num_workers=0)
+        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=val_batch_size, shuffle=False, num_workers=0)
 
     if model is None:
         model = torch.load(model_save_path).eval()
     model.eval()
-    model.to(DEVICE)
+    model.to(device)
 
     # evaluate model on data_loader
     if run_evaluation:
-        print("Evaluating model on data_loader: ")
+        print("\nEvaluating model on data_loader: ")
         results = pt_train._evaluate(model, data_loader)
         print("Results: ", results)
 
@@ -405,7 +424,7 @@ def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, m
             print("Label: ", label)
 
             # get prediction
-            image = image.unsqueeze(0).to(DEVICE)
+            image = image.unsqueeze(0).to(device)
             pred = model(image)
             print("NN output: ", pred)
             pred = int(torch.argmax(pred, dim=1).detach().cpu().numpy())
@@ -417,6 +436,7 @@ def visualise_generator(data_loader, full_labels=FULL_LABELS, num_images=None, m
             label = int(torch.argmax(label, dim=0).detach().cpu().numpy())
             print("Label: ", label, "Label name: ", full_labels[label], "\n")
 
+            plt.figure(figsize=(10, 10))
             plt.imshow(image)
             plt.title("Label name: " + str(full_labels[label]) + " | Pred name: " + str(full_labels[pred]))
             plt.show()

@@ -1,6 +1,7 @@
 import torch.nn as nn
 from torchvision import models
 from torch.nn import functional as F
+import pretrainedmodels
 
 import pytorch_utils.callbacks as pt_callbacks
 import pytorch_utils.training_utils as pt_train
@@ -16,6 +17,7 @@ class CustomModelBase(pt_train.CustomModelBase):
     def __init__(self, class_weights):
         super(CustomModelBase, self).__init__()
         self.class_weights = class_weights
+        self.accuracy_function = pt_train._f1_score
 
     def training_step(self, batch):
         # print("batch: ", len(batch))
@@ -23,7 +25,8 @@ class CustomModelBase(pt_train.CustomModelBase):
 
         out = self(images)  # Generate predictions
         loss = F.cross_entropy(out, labels, weight=self.class_weights)  # Calculate loss with class weights
-        acc = pt_train._accuracy(out, labels)  # Calculate accuracy
+        # acc = pt_train._accuracy(out, labels)  # Calculate accuracy
+        acc = pt_train._f1_score(out, labels)
         return loss, acc
 
     def validation_step(self, batch):
@@ -45,6 +48,7 @@ class AlexNet(CustomModelBase):
     def forward(self, x):
         return self.model(x)
 
+
 # 11M paramters
 class ResNet18(CustomModelBase):
     def __init__(self, num_classes=2, class_weights=None):
@@ -54,6 +58,7 @@ class ResNet18(CustomModelBase):
 
     def forward(self, x):
         return self.model(x)
+
 
 # 21M paramters
 class ResNet34(CustomModelBase):
@@ -65,6 +70,7 @@ class ResNet34(CustomModelBase):
     def forward(self, x):
         return self.model(x)
 
+
 class ResNet50(CustomModelBase):
     def __init__(self, num_classes=2, class_weights=None):
         super(ResNet50, self).__init__(class_weights=class_weights)
@@ -73,6 +79,7 @@ class ResNet50(CustomModelBase):
 
     def forward(self, x):
         return self.model(x)
+
 
 # 42M paramters
 class ResNet101(CustomModelBase):
@@ -84,6 +91,7 @@ class ResNet101(CustomModelBase):
     def forward(self, x):
         return self.model(x)
 
+
 class ResNet152(CustomModelBase):
     def __init__(self, num_classes=2, class_weights=None):
         super(ResNet152, self).__init__(class_weights=class_weights)
@@ -93,7 +101,47 @@ class ResNet152(CustomModelBase):
     def forward(self, x):
         return self.model(x)
 
-# 6.6M paramters
+
+class ResNeXt50_32x4d(CustomModelBase):
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNeXt50_32x4d, self).__init__(class_weights=class_weights)
+        self.model = models.resnext50_32x4d(weights=models.ResNet152_Weights.DEFAULT)
+        self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class ResNeXt101_32x8d(CustomModelBase):
+    def __init__(self, num_classes=2, class_weights=None):
+        super(ResNeXt101_32x8d, self).__init__(class_weights=class_weights)
+        self.model = models.resnext101_32x8d(weights=models.ResNet152_Weights.DEFAULT)
+        self.model.fc = nn.Linear(self.model.fc.in_features, num_classes, bias=True)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class SeResNext101(CustomModelBase):
+    def __init__(self, num_classes=2, class_weights=None):
+        super(SeResNext101, self).__init__(class_weights=class_weights)
+        self.model = pretrainedmodels.__dict__['se_resnext101_32x4d'](num_classes=1000, pretrained='imagenet')
+        self.model.last_linear = nn.Linear(self.model.last_linear.in_features, num_classes, bias=True)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class InceptionResNetV2(CustomModelBase):
+    def __init__(self, num_classes=2, class_weights=None):
+        super(InceptionResNetV2, self).__init__(class_weights=class_weights)
+        self.model = pretrainedmodels.inceptionresnetv2(num_classes=1000, pretrained=None)
+        self.model.last_linear = nn.Linear(self.model.last_linear.in_features, num_classes, bias=True)
+
+    def forward(self, x):
+        return self.model(x)
+
+
 # InceptionNet v1 - GoogLeNet
 class InceptionNet(CustomModelBase):
     def __init__(self, num_classes=2, class_weights=None):
@@ -103,6 +151,7 @@ class InceptionNet(CustomModelBase):
 
     def forward(self, x):
         return self.model(x)
+
 
 # 4M parameters
 class EfficientNetB0(CustomModelBase):
@@ -222,6 +271,10 @@ models_dict = {
     'resnet50': ResNet50,
     'resnet101': ResNet101,
     'resnet152': ResNet152,
+    'resnext50_32x4d': ResNeXt50_32x4d,
+    'resnext101_32x8d': ResNeXt101_32x8d,
+    'se_resnet_next': SeResNext101,
+    'inception_resnet': InceptionResNetV2,
     'inception': InceptionNet,
     'eff_b0': EfficientNetB0,
     'eff_b1': EfficientNetB1,

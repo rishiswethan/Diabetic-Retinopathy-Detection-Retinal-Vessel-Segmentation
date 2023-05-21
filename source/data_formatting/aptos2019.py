@@ -117,6 +117,6 @@ if __name__ == '__main__':
 
     split_train_test(
         config.DATA_FOLDERS['training_data'] + config.APTOS2019 + os.sep + 'all' + os.sep,
-        config.TRAIN_TEST_SPLIT
+        0.3
     )
 

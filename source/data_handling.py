@@ -17,63 +17,63 @@ DATA_FOLDERS = cf.DATA_FOLDERS
 SQUARE_SIZE = cf.SQUARE_SIZE
 
 
-def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_aug=False, prob_each_aug=0.6):
+def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_aug=False, prob_each_aug=0.75):
     def _get_training_augmentation(height, width):
 
         train_transform = [
             # colour based transforms
-            albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
-
-            albu.IAAAdditiveGaussianNoise(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.CLAHE(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.RandomBrightness(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.RandomGamma(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.IAASharpen(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.Blur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
-
-            albu.MotionBlur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
-
-            albu.RandomContrast(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.HueSaturationValue(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.RandomBrightnessContrast(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.GaussNoise(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.MedianBlur(blur_limit=5, p=prob_each_aug) if use_colour_aug else None,
-
-            albu.InvertImg(p=prob_each_aug) if use_colour_aug else None,
-
-            albu.ToGray(p=prob_each_aug) if use_colour_aug else None,
-
-            # geometric transforms
+            # albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
+            #
+            # albu.IAAAdditiveGaussianNoise(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.CLAHE(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.RandomBrightness(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.RandomGamma(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.IAASharpen(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.Blur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.MotionBlur(blur_limit=3, p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.RandomContrast(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.HueSaturationValue(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.RandomBrightnessContrast(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.GaussNoise(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.MedianBlur(blur_limit=5, p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.InvertImg(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # albu.ToGray(p=prob_each_aug) if use_colour_aug else None,
+            #
+            # # geometric transforms
             albu.HorizontalFlip(p=prob_each_aug) if use_geometric_aug else None,
-
+            #
             albu.VerticalFlip(p=prob_each_aug) if use_geometric_aug else None,
-
+            #
             albu.Rotate(limit=180, p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.IAAPerspective(p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.RandomCrop(height=height, width=width, always_apply=True, p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=prob_each_aug, border_mode=0) if use_geometric_aug else None,
-
-            albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.RGBShift(p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.ChannelShuffle(p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=prob_each_aug) if use_geometric_aug else None,
-
-            albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.IAAPerspective(p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.RandomCrop(height=height, width=width, always_apply=True, p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=prob_each_aug, border_mode=0) if use_geometric_aug else None,
+            #
+            # albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.RGBShift(p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.ChannelShuffle(p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.CoarseDropout(max_holes=8, max_height=8, max_width=8, p=prob_each_aug) if use_geometric_aug else None,
+            #
+            # albu.Cutout(num_holes=8, max_h_size=8, max_w_size=8, p=prob_each_aug) if use_geometric_aug else None,
         ]
 
         # remove None from list
@@ -92,9 +92,71 @@ def image_paths(dataset, train_or_test, data_folders=DATA_FOLDERS):
     return paths
 
 
+def remove_black_borders(img, black_th=10):
+    img_t = img.copy()
+    img_t = cv2.cvtColor(img_t, cv2.COLOR_RGB2GRAY)
+
+    # x axis
+    centre_y = img_t.shape[1] // 2
+    black_list = img_t[:, centre_y]
+    black_list = np.where(black_list > black_th)[0]
+
+    if len(black_list) > 1:
+        first_non_black = black_list[0]
+        reverse_first_non_black = black_list[-1] + 1
+
+        img = img[first_non_black:, :, :]
+        img = img[:reverse_first_non_black - first_non_black, :, :]
+
+    # y axis
+    centre_x = img_t.shape[0] // 2
+    black_list = img_t[centre_x, :]
+    black_list = np.where(black_list > black_th)[0]
+
+    if len(black_list) > 1:
+        first_non_black_y = black_list[0]
+        reverse_first_non_black_y = black_list[-1] + 1
+
+        img = img[:, first_non_black_y:, :]
+        img = img[:, :reverse_first_non_black_y - first_non_black_y, :]
+
+    return img
+
+
+def basic_preprocessing(image, scale=SQUARE_SIZE):
+    def scaleRadius(img, scale):
+        x = img[img.shape[0] // 2, :, :].sum(1)
+        r = (x > x.mean() / 10).sum() / 2
+        s = scale * 1.0 / (r + 1e-8)
+
+        return cv2.resize(img, (0, 0), fx=s, fy=s)
+
+    a = image
+
+    # scale img to a given radius
+    # a = scaleRadius(a, scale)
+
+    # subtract local mean color
+    a = cv2.addWeighted(a, 4, cv2.GaussianBlur(a, (0, 0), scale / 30), -4, 128)
+
+    # remove outer 10%
+    b = np.zeros(a.shape)
+
+    cv2.circle(b, (a.shape[1] // 2, a.shape[0] // 2), int(scale * 0.9), (1, 1, 1), -1, 8, 0)
+
+    a = a * b + 128 * (1 - b)
+    a = cv2.resize(a, (scale, scale))
+
+    return a
+
+
 def process_image(image_path, square_size, augmentation):
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # remove black borders.
+    # Doing this and resizing to a set size will help scale the eye to a similar size for all images
+    image = remove_black_borders(image)
 
     # pad image to square
     height, width, _ = image.shape
@@ -107,11 +169,14 @@ def process_image(image_path, square_size, augmentation):
 
     image = cv2.resize(image, (square_size, square_size))
 
+    # image = basic_preprocessing(image)
+
     if augmentation is not None:
         image = augmentation(image=image)['image']
 
-    image = np.transpose(image, (2, 0, 1))  # (H, W, C) -> (C, H, W) for pytorch
     image = image / 255.0
+
+    image = np.transpose(image, (2, 0, 1))  # (H, W, C) -> (C, H, W) for pytorch
 
     label = utils.get_label_from_path(image_path)
 
@@ -154,14 +219,23 @@ class CustomImagePathGenerator:
         self.initialise_paths()
 
     def initialise_paths(self):
-        self.def_image_paths = []
-        for dataset in self.test_datasets:
-            paths = image_paths(dataset, self.train_or_test)
-            self.def_image_paths.extend(paths)
 
+        # get train or test image paths from selected datasets of train or test
+        self.def_image_paths = []
+        if self.train_or_test == 'train':
+            for dataset in self.train_datasets:
+                paths = image_paths(dataset, self.train_or_test)
+                self.def_image_paths.extend(paths)
+        else:
+            for dataset in self.test_datasets:
+                paths = image_paths(dataset, self.train_or_test)
+                self.def_image_paths.extend(paths)
+
+        # shuffle paths if required
         if self.shuffle:
             random.shuffle(self.def_image_paths)
 
+        # get length of paths and per class count
         self.image_paths_length = len(self.def_image_paths)
         self.per_class_cnt = get_class_wise_cnt(self.def_image_paths)
 
@@ -205,7 +279,11 @@ class DataGenerator(torch.utils.data.Dataset):
 
         assert self.train_or_test in ['train', 'test'], "train_or_test must be either 'train' or 'test'"
 
-        self.image_label_path_generator = CustomImagePathGenerator(train_or_test=self.train_or_test, shuffle=self.shuffle, verbose=self.verbose)
+        self.image_label_path_generator = CustomImagePathGenerator(
+            train_or_test=self.train_or_test,
+            shuffle=self.shuffle,
+            verbose=self.verbose
+        )
         self.per_class_cnt = self.image_label_path_generator.per_class_cnt
 
     def __len__(self):
