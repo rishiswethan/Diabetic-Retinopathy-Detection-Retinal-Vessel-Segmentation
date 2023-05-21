@@ -51,7 +51,9 @@ def correct_file_names(original_all_folders_path, annot_csv, training_all_folder
 
     # copy the files from the original folder to the training folder and rename them to contain the folder name
     for image in train_images:
-        print(image.split(os.sep)[-1].split(".")[0])
+        if random.random() < 0.02:
+            print(image.split(os.sep)[-1].split(".")[0])
+
         folder_name = train_labels[image.split(os.sep)[-1].split(".")[0]]
         folder_name = FULL_LABELS[int(folder_name)] + "-" + folder_name
 
@@ -195,12 +197,27 @@ def audit_train_and_test_images(train_images_folder, test_images_folder):
 
 
 if __name__ == "__main__":
+    # train set of EyePACS
+
     # correct_file_names("/mnt/nvme0n1p3/MySSD/Programming/AI/ClientProjects/develop/FundusImages/data/org_data/EyePACS/eyepacs_preprocess/eyepacs_preprocess/",
     #                    "/mnt/nvme0n1p3/MySSD/Programming/AI/ClientProjects/develop/FundusImages/data/org_data/EyePACS/eyepacs_preprocess/trainLabels.csv",
     #                    config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep,
     #                    img_name_prefix="")
 
-    # split_train_test(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "all" + os.sep, 0.2)
+    # split_train_test(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "all" + os.sep, 0.0)
+    #
+    # audit_train_and_test_images(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "train" + os.sep,
+    #                             config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "test" + os.sep)
 
-    audit_train_and_test_images(config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "train" + os.sep,
-                                config.DATA_FOLDERS["training_data"] + config.EyePACS + os.sep + "test" + os.sep)
+    ################################################################################################################################################################
+    # test set of EyePACS
+
+    # correct_file_names("/mnt/nvme0n1p3/MySSD/Programming/AI/ClientProjects/develop/FundusImages/data/org_data/EyePACS_test/test/",
+    #                    "/mnt/nvme0n1p3/MySSD/Programming/AI/ClientProjects/develop/FundusImages/data/org_data/EyePACS_test/retinopathy_solution.csv",
+    #                    config.DATA_FOLDERS["training_data"] + config.EyePACS_test + os.sep,
+    #                    img_name_prefix="")
+
+    split_train_test(config.DATA_FOLDERS["training_data"] + config.EyePACS_test + os.sep + "all" + os.sep, 0.0)
+
+    audit_train_and_test_images(config.DATA_FOLDERS["training_data"] + config.EyePACS_test + os.sep + "train" + os.sep,
+                                config.DATA_FOLDERS["training_data"] + config.EyePACS_test + os.sep + "test" + os.sep)
