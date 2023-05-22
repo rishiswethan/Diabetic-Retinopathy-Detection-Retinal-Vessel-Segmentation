@@ -58,7 +58,7 @@ def get_data_generators(
         width=SQUARE_SIZE,
         prob_apply_augmentation=1.0,
         use_geometric_augmentation=True,
-        use_colour_augmentation=False,
+        use_colour_augmentation=True,
         train_shuffle=True,
         val_shuffle=True
 ):
@@ -244,6 +244,7 @@ def train(
     print("Num val images: ", len(val_gen))
 
     if continue_training:
+        print("Loading model from: ", model_save_path)
         model = torch.load(model_save_path)
     else:
         model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
@@ -263,7 +264,8 @@ def train(
         model=model,
         callbacks_function=callbacks_func,
         train_loader=train_loader,
-        val_loader=val_loader
+        val_loader=val_loader,
+        continue_training=continue_training,
     )
 
     if metric and metric_mode:

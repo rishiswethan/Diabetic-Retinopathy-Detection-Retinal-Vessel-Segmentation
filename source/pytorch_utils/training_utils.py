@@ -1,12 +1,17 @@
 from torch.optim import Adam as adam_opt
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 import gc
 import traceback
+from sklearn.metrics import cohen_kappa_score
+import numpy as np
+import warnings
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+warnings.filterwarnings("ignore", category=RuntimeWarning, module='tkinter')
 
 
 def _evaluate(
@@ -31,6 +36,61 @@ def _accuracy(
     preds = torch.argmax(outputs, dim=1)
     labels = torch.argmax(labels, dim=1)
     return torch.tensor(torch.sum(preds == labels).item() / len(preds))
+
+
+def _f1_score(outputs: torch.Tensor, labels: torch.Tensor):
+    preds = torch.argmax(outputs, dim=1)
+    labels = torch.argmax(labels, dim=1)
+
+    # Precision: True positives / (True positives + False positives)
+    tp = torch.sum((preds == 1) & (labels == 1)).float()
+    fp = torch.sum((preds == 1) & (labels == 0)).float()
+    precision = tp / (tp + fp + 1e-8)  # Adding a small number to avoid division by zero
+
+    # Recall: True positives / (True positives + False negatives)
+    fn = torch.sum((preds == 0) & (labels == 1)).float()
+    recall = tp / (tp + fn + 1e-8)  # Adding a small number to avoid division by zero
+
+    # F1 Score: Harmonic mean of precision and recall
+    f1 = 2 * precision * recall / (precision + recall + 1e-8)  # Adding a small number to avoid division by zero
+
+    return f1
+
+
+def _quadratic_weighted_kappa(outputs: torch.Tensor, labels: torch.Tensor):
+    preds = torch.argmax(outputs, dim=1)
+    labels = torch.argmax(labels, dim=1)
+
+    # Convert tensors to numpy arrays for use with scikit-learn
+    preds_np = preds.detach().cpu().numpy()
+    labels_np = labels.detach().cpu().numpy()
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=RuntimeWarning)
+        kappa = cohen_kappa_score(labels_np, preds_np, weights='quadratic')
+
+    if np.isnan(kappa) or np.isinf(kappa):
+        kappa = 0
+
+    return torch.tensor(kappa)
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2, reduction='mean'):
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        BCE_loss = F.cross_entropy(inputs, targets, reduction='none')
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+
+        if self.reduction == 'sum':
+            return F_loss.sum()
+        elif self.reduction == 'mean':
+            return F_loss.mean()
 
 
 def fit(

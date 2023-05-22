@@ -57,7 +57,7 @@ def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_
             #
             albu.VerticalFlip(p=prob_each_aug) if use_geometric_aug else None,
             #
-            albu.Rotate(limit=180, p=prob_each_aug) if use_geometric_aug else None,
+            albu.Rotate(limit=180, p=prob_each_aug, border_mode=cv2.BORDER_CONSTANT) if use_geometric_aug else None,
             #
             # albu.IAAPerspective(p=prob_each_aug) if use_geometric_aug else None,
             #
@@ -92,14 +92,14 @@ def image_paths(dataset, train_or_test, data_folders=DATA_FOLDERS):
     return paths
 
 
-def remove_black_borders(img, black_th=10):
+def remove_black_borders(img, black_th=5):
     img_t = img.copy()
     img_t = cv2.cvtColor(img_t, cv2.COLOR_RGB2GRAY)
 
     # x axis
     centre_y = img_t.shape[1] // 2
     black_list = img_t[:, centre_y]
-    black_list = np.where(black_list > black_th)[0]
+    black_list = np.where(black_list >= black_th)[0]
 
     if len(black_list) > 1:
         first_non_black = black_list[0]
@@ -111,7 +111,7 @@ def remove_black_borders(img, black_th=10):
     # y axis
     centre_x = img_t.shape[0] // 2
     black_list = img_t[centre_x, :]
-    black_list = np.where(black_list > black_th)[0]
+    black_list = np.where(black_list >= black_th)[0]
 
     if len(black_list) > 1:
         first_non_black_y = black_list[0]
@@ -134,7 +134,7 @@ def basic_preprocessing(image, scale=SQUARE_SIZE):
     a = image
 
     # scale img to a given radius
-    # a = scaleRadius(a, scale)
+    a = scaleRadius(a, scale)
 
     # subtract local mean color
     a = cv2.addWeighted(a, 4, cv2.GaussianBlur(a, (0, 0), scale / 30), -4, 128)
