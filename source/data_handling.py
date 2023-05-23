@@ -310,7 +310,7 @@ class DataGenerator(torch.utils.data.Dataset):
 
         image_path = self.image_label_path_generator.def_image_paths[actual_idx]
 
-        if self.prob_apply_augmentation < random.random():
+        if self.prob_apply_augmentation >= random.random():
             image, label = process_image(image_path, square_size=self.image_square_size, augmentation=self.augmentation)
         else:
             image, label = process_image(image_path, square_size=self.image_square_size, augmentation=None)
