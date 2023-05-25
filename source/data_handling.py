@@ -15,6 +15,7 @@ TEST_DATASETS = cf.TEST_DATASETS
 DATA_FOLDERS = cf.DATA_FOLDERS
 
 SQUARE_SIZE = cf.SQUARE_SIZE
+CLASS_LIST = list(cf.FULL_LABELS.values())
 
 
 def get_training_augmentation(height, width, use_geometric_aug=True, use_colour_aug=False, prob_each_aug=0.75):
@@ -201,6 +202,8 @@ class CustomImagePathGenerator:
             train_or_test,
             train_datasets=DATASETS_IN_USE,
             test_datasets=TEST_DATASETS,
+            class_list=CLASS_LIST,
+            make_all_classes_equal=True,
             shuffle=True,
             verbose=False
     ):
@@ -212,14 +215,16 @@ class CustomImagePathGenerator:
         self.def_image_paths = []
         self.last_iter_index = 0
         self.image_paths_length = 0
+        self.make_all_classes_equal = make_all_classes_equal
         self.per_class_cnt = {}
+        self.org_per_class_cnt = {}
+        self.class_list = class_list
 
         assert self.train_or_test in ['train', 'test'], "train_or_test must be either 'train' or 'test'"
 
         self.initialise_paths()
 
     def initialise_paths(self):
-
         # get train or test image paths from selected datasets of train or test
         self.def_image_paths = []
         if self.train_or_test == 'train':
@@ -238,6 +243,85 @@ class CustomImagePathGenerator:
         # get length of paths and per class count
         self.image_paths_length = len(self.def_image_paths)
         self.per_class_cnt = get_class_wise_cnt(self.def_image_paths)
+        self.org_per_class_cnt = self.per_class_cnt.copy()
+
+        if self.make_all_classes_equal:
+            self.max_class_len = max(self.org_per_class_cnt.values())
+            self.max_iter_len = self.max_class_len * len(self.org_per_class_cnt)
+            self.class_iter_indices = {}
+            self.each_class_last_iter_index = {i: 0 for i in range(len(self.class_list))}
+            self.equalised_paths = []  # smaller class paths are repeated to make all classes equal
+            self.per_class_cnt = {i: self.max_class_len for i in range(len(self.class_list))}  # each class has equal count
+
+            self.equalise_class_paths(shuffle=self.shuffle)
+
+    def get_class_iter_indices(self):
+        """
+        Assign equal indices to each class so that each class is iterated over in each epoch
+
+        Example:
+            max_class_len = 3
+            class_iter_indices = {
+                0: 0, 1: 1, 2: 2, 3: 0, 4: 1, 5: 2, 6: 0, 7: 1, 8: 2, 9: 0, 10: 1, 11: 2
+            }
+        """
+
+        last_class_index = 0
+        for i in range(self.max_iter_len):
+            self.class_iter_indices[i] = last_class_index
+            last_class_index += 1
+
+            if last_class_index == len(self.org_per_class_cnt):
+                last_class_index = 0
+
+        # get class-wise paths
+        self.class_paths = {i: [] for i in range(len(self.class_list))}
+        for i, path in enumerate(self.def_image_paths):
+            path_class = utils.get_label_from_path(path, return_one_hot=False)
+            self.class_paths[path_class].append(path)
+
+    def equalise_class_paths(self, shuffle=True):
+        self.get_class_iter_indices()
+        if shuffle:
+            random.shuffle(self.def_image_paths)
+
+        # change the def image paths to meet the lengths self.class_iter_indices indices
+        classwise_iter_num = self.each_class_last_iter_index.copy()
+        for i in range(self.max_iter_len):
+            class_to_be_used = self.class_iter_indices[i]
+
+            # if max samples is reached for the smaller classes, reset the class list and shuffle so that it can be added again to upsample the smaller classes
+            if classwise_iter_num[class_to_be_used] >= len(self.class_paths[class_to_be_used]):
+                classwise_iter_num[class_to_be_used] = 0
+                if shuffle:
+                    # we are shuffling here so that the last few samples of the class are not always the same. Doesn't hurt to shuffle
+                    random.shuffle(self.class_paths[class_to_be_used])
+
+            self.equalised_paths.append(self.class_paths[class_to_be_used][classwise_iter_num[class_to_be_used]])
+            classwise_iter_num[class_to_be_used] += 1
+
+        if shuffle:
+            random.shuffle(self.equalised_paths)
+
+        # update the def image paths to equalised paths
+        self.def_image_paths = self.equalised_paths
+
+        # audit to make sure the samples per class are equal
+        audit_classwise_cnt = self.each_class_last_iter_index.copy()
+        for path in self.def_image_paths:
+            try:
+                path_class = utils.get_label_from_path(path, return_one_hot=False)
+            except ValueError:
+                print(path)
+                raise ValueError
+
+            audit_classwise_cnt[path_class] += 1
+
+        for class_idx in range(len(self.class_list)):
+            if audit_classwise_cnt[class_idx] != self.max_class_len:
+                raise f"Audit failed! Class {class_idx} has {audit_classwise_cnt[class_idx]} samples instead of {self.max_class_len}"
+
+        print(f"Audit passed! All classes have {self.max_class_len} samples")
 
     def __len__(self):
         return self.image_paths_length
@@ -268,7 +352,8 @@ class DataGenerator(torch.utils.data.Dataset):
             image_square_size=SQUARE_SIZE,
             shuffle=True,
             verbose=False,
-            prob_apply_augmentation=1.0
+            prob_apply_augmentation=1.0,
+            make_all_classes_equal=True
     ):
         self.train_or_test = train_or_test
         self.image_square_size = image_square_size
@@ -282,33 +367,34 @@ class DataGenerator(torch.utils.data.Dataset):
         self.image_label_path_generator = CustomImagePathGenerator(
             train_or_test=self.train_or_test,
             shuffle=self.shuffle,
-            verbose=self.verbose
+            verbose=self.verbose,
+            make_all_classes_equal=make_all_classes_equal
         )
         self.per_class_cnt = self.image_label_path_generator.per_class_cnt
 
     def __len__(self):
-        return len(self.image_label_path_generator)
-
-    def __getitem__(self, idx):
-        # Compute the actual index
+        # return a lower length if num_workers is not 0, so that each worker gets a fair share of the data
         worker_info = torch.utils.data.get_worker_info()
         if worker_info is None:  # single-process data loading
-            actual_idx = idx
+            return len(self.image_label_path_generator)
+
         else:
-            # in a worker process
-            # This assumes that each worker gets an equal share of the data.
-            per_worker = len(self) // worker_info.num_workers
-            residual = len(self) % worker_info.num_workers
+            per_worker = len(self.image_label_path_generator) // worker_info.num_workers
+            residual = len(self.image_label_path_generator) % worker_info.num_workers
             if worker_info.id < residual:
-                start_idx = (per_worker + 1) * worker_info.id
+                return per_worker + 1
             else:
-                start_idx = per_worker * worker_info.id + residual
-            actual_idx = start_idx + idx
+                return per_worker
 
-        if actual_idx >= len(self.image_label_path_generator):
-            actual_idx = random.randint(0, len(self.image_label_path_generator) - 1)
+    def __getitem__(self, idx):
+        actual_idx = idx
 
-        image_path = self.image_label_path_generator.def_image_paths[actual_idx]
+        try:
+            image_path = self.image_label_path_generator.def_image_paths[actual_idx]
+        except IndexError:
+            print("IndexError: ", actual_idx)
+            print("len(self.image_label_path_generator.def_image_paths): ", len(self.image_label_path_generator.def_image_paths))
+            raise IndexError
 
         if self.prob_apply_augmentation >= random.random():
             image, label = process_image(image_path, square_size=self.image_square_size, augmentation=self.augmentation)
