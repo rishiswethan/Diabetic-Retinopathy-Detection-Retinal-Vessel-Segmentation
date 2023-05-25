@@ -255,6 +255,8 @@ class CustomImagePathGenerator:
 
             self.equalise_class_paths(shuffle=self.shuffle)
 
+            self.image_paths_length = len(self.equalised_paths)
+
     def get_class_iter_indices(self):
         """
         Assign equal indices to each class so that each class is iterated over in each epoch

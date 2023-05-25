@@ -60,7 +60,8 @@ def get_data_generators(
         use_geometric_augmentation=True,
         use_colour_augmentation=True,
         train_shuffle=True,
-        val_shuffle=True
+        val_shuffle=True,
+        make_all_classes_equal=True,
 ):
     train_gen = data_handling.DataGenerator(
         'train',
@@ -68,14 +69,16 @@ def get_data_generators(
         # augmentation=None,
         shuffle=train_shuffle,
         prob_apply_augmentation=prob_apply_augmentation,
-        verbose=False
+        verbose=False,
+        make_all_classes_equal=make_all_classes_equal
     )
 
     val_gen = data_handling.DataGenerator(
         'test',
         augmentation=None,
         shuffle=val_shuffle,
-        verbose=False
+        verbose=False,
+        make_all_classes_equal=False
     )
 
     return train_gen, val_gen
@@ -252,7 +255,7 @@ def train(
 
     # visualise training set and model
     if initial_visualise:
-        visualise_generator(train_loader, num_images=3, model=model, run_evaluation=False, val_batch_size=batch_size)
+        visualise_generator(train_loader, num_images=5, model=model, run_evaluation=False, val_batch_size=batch_size)
 
     print("_________________________________________________________________________________________________")
     print("Training model: ", conv_model, "\n")
@@ -392,8 +395,9 @@ def visualise_generator(
         num_images=None,
         model=None,
         model_save_path=MODEL_SAVE_PATH_BEST_VAL_LOSS,
-        run_evaluation=False,
+        run_evaluation=True,
         val_batch_size=8,
+        num_workers=MAX_THREADS,
         device=DEVICE,
 ):
     if type(data_loader) == str:
@@ -405,7 +409,7 @@ def visualise_generator(
         raise TypeError("data_loader must be of type str or torch.utils.data.DataLoader, or \"train\" or \"val\"")
 
     if type(data_loader) != torch.utils.data.DataLoader:
-        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=val_batch_size, shuffle=False, num_workers=0)
+        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=val_batch_size, shuffle=False, num_workers=num_workers)
 
     if model is None:
         model = torch.load(model_save_path).eval()

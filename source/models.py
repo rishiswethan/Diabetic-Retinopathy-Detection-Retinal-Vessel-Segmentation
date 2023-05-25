@@ -44,8 +44,8 @@ class CustomModelBase(pt_train.CustomModelBase):
         # loss = F.cross_entropy(out, labels, weight=None)  # We are not using class weights for validation since data is balanced in validation set
         loss = self.train_criterion(out, labels)  # same loss function as training
 
-        acc = pt_train._accuracy(out, labels)  # Calculate accuracy
-        # acc = self.accuracy_function(out, labels)  # Same accuracy function as training
+        # acc = pt_train._accuracy(out, labels)  # Calculate accuracy
+        acc = self.accuracy_function(out, labels)  # Same accuracy function as training
 
         return {'val_loss': loss.detach(), 'val_acc': acc}
 
