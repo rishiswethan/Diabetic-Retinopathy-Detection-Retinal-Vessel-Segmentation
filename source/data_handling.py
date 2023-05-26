@@ -151,7 +151,7 @@ def basic_preprocessing(image, scale=SQUARE_SIZE):
     return a
 
 
-def process_image(image_path, square_size, augmentation):
+def process_image(image_path, square_size, augmentation, return_label=True):
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -179,7 +179,10 @@ def process_image(image_path, square_size, augmentation):
 
     image = np.transpose(image, (2, 0, 1))  # (H, W, C) -> (C, H, W) for pytorch
 
-    label = utils.get_label_from_path(image_path)
+    if return_label:
+        label = utils.get_label_from_path(image_path)
+    else:
+        return image
 
     return image, label
 
