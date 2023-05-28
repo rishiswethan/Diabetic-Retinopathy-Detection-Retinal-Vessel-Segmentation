@@ -21,9 +21,33 @@ This project was tested on Ubuntu 22.04 LTS with Python 3.10
    Try feeding the folder path, and try to feed a single image path as input to the program.
 
 
-### What the outputs from prediction mean:
+### What the outputs and parameters from predict.py mean:
 
-        predict() of Predict class in predict.py file is the main function that is called to predict the condition of the retina for the given image(s).
+     - Predict class
+        Class to help initialise the model and encapsulate the predict function. Use this class to use the predict function encapsulated within it.
+        
+        Parameters:
+        ----------
+        model_save_path: str
+            path to the model to load
+        device: str, optional
+            device to run the model on. If None, will use cuda by default if available, else will use cpu.
+            Options: "cpu" or "cuda".
+        batch_size: int, optional
+            batch size to use when predicting. Reduce if running out of memory when using cuda
+        image_size: int, optional
+            image size to use when predicting. Do not change unless you trained the model with a different image size
+        verbose: bool, optional
+            whether to print out information when predicting
+        labels: list, optional
+            list of labels to use when predicting. Do not change unless you trained the model with different labels
+        best_hp_json_save_path: str, optional
+            path to the json file containing the best hyperparameters from the tuning process
+        num_classes: int, optional
+            number of classes to use when predicting. Do not change unless you trained the model with a different number of classes
+
+     - predict()
+        function of Predict class in predict.py file is the main function that is called to predict the condition of the retina for the given image(s).
         Predict the condition of the retina for the given image(s)
 
         Parameters
@@ -38,15 +62,6 @@ This project was tested on Ubuntu 22.04 LTS with Python 3.10
         -------
         outputs: dict of str: int
             You'll get a dictionary of image paths and their corresponding predicted labels.
-            The labels are encoded as integers, so you'll need to decode them to get the actual labels given below.
-
-                FULL_LABELS = {
-                    0: 'No_DR',
-                    1: 'Mild',
-                    2: 'Moderate',
-                    3: 'Severe',
-                    4: 'Proliferate_DR',
-                }
             
             Example:
                 >>> Predict().predict(cf.INPUT_FOLDER)  # contains 3 images
