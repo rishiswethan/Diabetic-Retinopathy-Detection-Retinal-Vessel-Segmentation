@@ -12,10 +12,10 @@ import pytorch_utils.callbacks as pt_callbacks
 import pytorch_utils.training_utils as pt_train
 import pytorch_utils.hyper_tuner as pt_tuner
 
-import source.data_handling as data_handling
-import source.config as cf
-import source.utils as utils
-import source.models as models
+import data_handling
+import config as cf
+import utils
+import models
 
 #############################################################################
 # define constants

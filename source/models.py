@@ -1,13 +1,8 @@
 import torch.nn as nn
 from torchvision import models
-from torch.nn import functional as F
 import pretrainedmodels
 
-import pytorch_utils.callbacks as pt_callbacks
 import pytorch_utils.training_utils as pt_train
-import source.data_handling as data_handling
-import source.config as cf
-import source.utils as utils
 
 
 class CustomModelBase(pt_train.CustomModelBase):

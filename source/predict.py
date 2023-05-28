@@ -5,8 +5,8 @@ import cv2
 import time
 import matplotlib.pyplot as plt
 
-import source.config as cf
-import source.data_handling as data_handling
+import config as cf
+import data_handling
 
 MODEL_SAVE_PATH = cf.MODEL_SAVE_PATH_BEST_VAL_LOSS
 IMAGE_SIZE = cf.SQUARE_SIZE

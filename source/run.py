@@ -1,5 +1,5 @@
-import source.train as train
-import source.predict as predict
+import train
+import predict
 
 print("1) Train the model\n"
       "2) Tune hyperparameters\n"

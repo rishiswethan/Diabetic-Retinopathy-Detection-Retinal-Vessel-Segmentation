@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 import json
 
-import source.config as cf
+import config as cf
 
 NUM_CLASSES = cf.NUM_CLASSES
 
