@@ -114,11 +114,11 @@ TUNING_EARLY_STOPPING_PATIENCE = 10
 
 # must be in ascending order
 FULL_LABELS = {
-    0: 'No_DR',  # 1805 images
-    1: 'Mild',  # 370 images
-    2: 'Moderate',  # 999 images
-    3: 'Severe',  # 193 images
-    4: 'Proliferate_DR',  # 295 images
+    0: 'No_DR',
+    1: 'Mild',
+    2: 'Moderate',
+    3: 'Severe',
+    4: 'Proliferate_DR',
 }
 
 # - callback parameters

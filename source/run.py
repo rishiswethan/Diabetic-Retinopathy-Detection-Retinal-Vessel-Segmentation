@@ -1,8 +1,10 @@
 import source.train as train
+import source.predict as predict
 
 print("1) Train the model\n"
       "2) Tune hyperparameters\n"
-      "3) Visualise the model on val set\n")
+      "3) Visualise the model on val set\n"
+      "4) Predict on custom image(s)\n")
 choice = input("Enter your choice: ")
 
 if choice == '1':
@@ -34,3 +36,10 @@ elif choice == '2':
 elif choice == '3':
     # visualise the model on val set, using the stored model
     train.visualise_generator(data_loader='val')
+
+elif choice == '4':
+    # predict on custom image
+    path = input("Enter the full path to a single image, or a folder containing images: ")
+
+    pred_class = predict.Predict(verbose=True)
+    print(pred_class.predict(path))

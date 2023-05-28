@@ -66,17 +66,60 @@ class Predict:
 
     def predict(self, images):
         """
-        Predict the similarity between images_1 and images_2. Image_1 is typically the folded image and image_2 is the spread image
+        Predict the condition of the retina for the given image(s)
 
-        :param images_1 str or list of str: path to the image or list of paths to the images
-        :param images_2 str or list of str: path to the image or list of paths to the images
-        :return: list of ints: list of binary predictions (0 or 1) for each image pair
+        Parameters
+        ----------
+        images: str or list of str
+            Argument can be one of the following:
+                - string path to a single image
+                - string path to a folder containing images
+                - list of string paths to images
+
+        Returns
+        -------
+        outputs: dict of str: int
+            You'll get a dictionary of image paths and their corresponding predicted labels.
+            The labels are encoded as integers, so you'll need to decode them to get the actual labels given below.
+
+                FULL_LABELS = {
+                    0: 'No_DR',
+                    1: 'Mild',
+                    2: 'Moderate',
+                    3: 'Severe',
+                    4: 'Proliferate_DR',
+                }
+
+            Example:
+                >>> Predict().predict(cf.INPUT_FOLDER)  # contains 3 images
+
+                Output:
+                    {'<cf.INPUT_FOLDER>/test_IDRiD_016-Severe-3.jpg': 'Severe',
+                     '<cf.INPUT_FOLDER>/test_IDRiD_047-No_DR-0.jpg': 'No_DR',
+                     '<cf.INPUT_FOLDER>/train_IDRiD_236-Moderate-2.jpg': 'Moderate'}
+
         """
 
         if (type(images) is str):
-            images = [images]
+            if os.path.isdir(images):
+                # Get all images in the folder
+                # images = [os.path.join(images, img) for img in os.listdir(images)]
+                images_list = []
+                for img in os.listdir(images):
+                    file_path = os.path.join(images, img)
+                    if os.path.isfile(file_path):
+                        images_list.append(file_path)
+
+                images = images_list
+
+
+            else:
+                # Single image
+                images = [images]
 
         elif type(images) is not list:
+            # if it's not a list of images as well as not a string, then it's not valid
+
             raise TypeError("images must be a list of image paths or a single image path")
 
         outputs = []
@@ -103,18 +146,23 @@ class Predict:
         # Concatenate outputs from various batches into a simple list of outputs
         outputs = np.concatenate(outputs, axis=0)
 
-        # Convert to binary predictions from [0, 1] to 0 or 1
+        # Convert to numerical labels from softmax outputs
         simple_outputs = np.argmax(outputs, axis=1)
 
-        if self.verbose:
-            for i in range(len(images)):
-                output_label = self.labels[simple_outputs[i]]
+        output_dict = {}
+        for i in range(len(images)):
+            output_label = self.labels[simple_outputs[i]]
 
-                plt.imshow(preprocessed_images[i])
+            output_dict[images[i]] = output_label
+
+            if self.verbose:
+                img_transp = preprocessed_images[i].transpose(1, 2, 0)
+
+                plt.imshow(img_transp)
                 plt.title("Prediction: " + output_label)
                 plt.show()
 
-        return simple_outputs
+        return output_dict
 
 
 if __name__ == '__main__':

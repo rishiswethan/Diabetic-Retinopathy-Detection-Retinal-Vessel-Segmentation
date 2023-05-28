@@ -18,4 +18,44 @@ This project was tested on Ubuntu 22.04 LTS with Python 3.10
            - `pip install torch`
            
 3) `python run.py`
-    - You can follow the on screen instructions to run the program.
+    - You can follow the on-screen instructions to run the program.
+    - Input folder contains sample images to test the program.
+   Try feeding the folder path as input to the program, and try to feed a single image path as input to the program.
+
+
+### What the outputs from prediction mean:
+
+        predict() of Predict class in predict.py file is the main function that is called to predict the condition of the retina for the given image(s).
+        Predict the condition of the retina for the given image(s)
+
+        Parameters
+        ----------
+        images: str or list of str
+            Argument can be one of the following:
+                - string path to a single image
+                - string path to a folder containing images
+                - list of string paths to images
+
+        Returns
+        -------
+        outputs: dict of str: int
+            You'll get a dictionary of image paths and their corresponding predicted labels.
+            The labels are encoded as integers, so you'll need to decode them to get the actual labels given below.
+
+                FULL_LABELS = {
+                    0: 'No_DR',
+                    1: 'Mild',
+                    2: 'Moderate',
+                    3: 'Severe',
+                    4: 'Proliferate_DR',
+                }
+            
+            Example:
+                >>> Predict().predict(cf.INPUT_FOLDER)  # contains 3 images
+
+                Output:
+                    {'<cf.INPUT_FOLDER>/test_IDRiD_016-Severe-3.jpg': 'Severe',
+                     '<cf.INPUT_FOLDER>/test_IDRiD_047-No_DR-0.jpg': 'No_DR',
+                     '<cf.INPUT_FOLDER>/train_IDRiD_236-Moderate-2.jpg': 'Moderate'}
+
+
