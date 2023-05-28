@@ -30,8 +30,8 @@ DATASETS_IN_USE = [
     APTOS2019,
     IDRID,
     SUSTech,
-    EyePACS,
-    EyePACS_test
+    # EyePACS,
+    # EyePACS_test
 ]
 TEST_DATASETS = [
     APTOS2019,
@@ -112,6 +112,7 @@ TUNE_HP_RANGES = {
 }
 TUNING_EARLY_STOPPING_PATIENCE = 10
 
+# must be in ascending order
 FULL_LABELS = {
     0: 'No_DR',  # 1805 images
     1: 'Mild',  # 370 images
@@ -143,7 +144,7 @@ INITIAL_LR = 0.001
 INITIAL_EPOCH = 999999
 
 # get number of CPUs available
-MAX_THREADS = multiprocessing.cpu_count() - 1
+MAX_THREADS = 7
 
 ######################################################################################################################################################
 

@@ -172,6 +172,7 @@ def train(
         device_name=DEVICE,
         initial_visualise=False,
         continue_training=True,
+        fine_tune=False,
         model_save_path=MODEL_SAVE_PATH_BEST_TRAIN_LOSS,
 ):
     """
@@ -191,6 +192,8 @@ def train(
         Number of epochs to train for. Can step out of the training loop early if the early_stopping callback in the pytorch_callbacks.py file is triggered.
     initial_visualise: bool
         Whether to visualise some training examples before training begins.
+    fine_tune (optional): bool or str
+        Path of the pretrained model to be loaded for fine tuning. If False, no pretrained model will be loaded. Default is None.
 
     Returns
     -------
@@ -246,8 +249,10 @@ def train(
     print("Num train images: ", len(train_gen))
     print("Num val images: ", len(val_gen))
 
-    if continue_training:
+    if continue_training or fine_tune:
+        model_save_path = fine_tune if fine_tune else model_save_path
         print("Loading model from: ", model_save_path)
+
         model = torch.load(model_save_path)
     else:
         model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
@@ -255,7 +260,7 @@ def train(
 
     # visualise training set and model
     if initial_visualise:
-        visualise_generator(train_loader, num_images=5, model=model, run_evaluation=False, val_batch_size=batch_size)
+        visualise_generator(train_loader, num_images=5, model=model, run_evaluation=True if fine_tune else False, val_batch_size=batch_size)
 
     print("_________________________________________________________________________________________________")
     print("Training model: ", conv_model, "\n")
@@ -283,7 +288,8 @@ def train(
 
 def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
                         early_stopping_patience=EARLY_STOPPING_PATIENCE,
-                        continue_training=True):
+                        continue_training=False,
+                        fine_tune=None):
     """
     Train the model using the best hyperparameters found using hyperopt
     """
@@ -292,7 +298,7 @@ def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
     best_hp = utils.load_dict_from_json(best_hp_json_save_path)
 
     # train using the best hyperparameters
-    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience, continue_training=continue_training)
+    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience, continue_training=continue_training, fine_tune=fine_tune)
 
 
 def train_to_tune(hp_dict,
