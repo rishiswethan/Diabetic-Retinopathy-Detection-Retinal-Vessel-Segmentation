@@ -20,7 +20,7 @@ This project was tested on Ubuntu 22.04 LTS with Python 3.10
 3) `python run.py`
     - You can follow the on-screen instructions to run the program.
     - Input folder contains sample images to test the program.
-   Try feeding the folder path as input to the program, and try to feed a single image path as input to the program.
+   Try feeding the folder path, and try to feed a single image path as input to the program.
 
 
 ### What the outputs from prediction mean:
