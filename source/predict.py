@@ -1,16 +1,18 @@
 import os
 import numpy as np
 import torch
-import cv2
-import time
 import matplotlib.pyplot as plt
 
 import config as cf
 import data_handling
+import models
+import utils
 
 MODEL_SAVE_PATH = cf.MODEL_SAVE_PATH_BEST_VAL_LOSS
 IMAGE_SIZE = cf.SQUARE_SIZE
 FULL_LABELS = cf.FULL_LABELS
+BEST_HP_JSON_SAVE_PATH = cf.BEST_HP_JSON_SAVE_PATH
+NUM_CLASSES = cf.NUM_CLASSES
 
 
 def _batch(iterable, n=1):
@@ -31,7 +33,9 @@ class Predict:
             batch_size=8,
             image_size=IMAGE_SIZE,
             verbose=False,
-            labels=FULL_LABELS
+            labels=FULL_LABELS,
+            best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
+            num_classes=NUM_CLASSES
             ):
         """
         Class to help initialise the model and encapsulate the predict function
@@ -45,12 +49,17 @@ class Predict:
 
         self.model_save_path = model_save_path
 
+        # load best hyperparameters
+        best_hp = utils.load_dict_from_json(best_hp_json_save_path)
+
         if device is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
 
-        self.model = torch.load(self.model_save_path, map_location=self.device)
+        self.model = models.models_dict[best_hp["conv_model"]](num_classes=num_classes, class_weights=None)
+        self.model.load_state_dict(torch.load(self.model_save_path, map_location=self.device))
+
         self.model.eval()
         self.model.to(self.device)
 

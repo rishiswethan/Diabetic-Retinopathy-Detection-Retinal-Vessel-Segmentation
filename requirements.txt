@@ -41,8 +41,9 @@ six==1.16.0
 sympy==1.11.1
 threadpoolctl==3.1.0
 tifffile==2023.4.12
-torch-inception-resnet-v2==0.0.33
 tqdm==4.64.1
 triton==2.0.0
 typing_extensions==4.4.0
 urllib3==1.26.13
+hyperopt==0.2.7
+pretrainedmodels==0.7.4
