@@ -13,7 +13,7 @@ if choice == '1':
         "1) Continue training from last best training epoch\n"
         "2) Fine tune from a pre-trained model\n"
         "3) Start training from scratch\n"
-        "Enter your choice:"
+        "Enter your choice: "
     )
     if ch == '1':
         # train the model using the last saved model as pre-trained weights
@@ -30,7 +30,8 @@ if choice == '1':
 elif choice == '2':
     # tune the hyperparameters
     ch = input("1) Continue tuning\n"
-               "2) Start tuning from scratch\n")
+               "2) Start tuning from scratch\n"
+               "Enter your choice: ")
     train.hyper_parameter_optimise(load_if_exists=True if ch == '1' else False)
 
 elif choice == '3':

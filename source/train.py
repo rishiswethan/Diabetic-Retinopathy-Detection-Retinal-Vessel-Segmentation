@@ -249,21 +249,23 @@ def train(
     print("Num train images: ", len(train_gen))
     print("Num val images: ", len(val_gen))
 
+    model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
+
     if continue_training or fine_tune:
         model_save_path = fine_tune if fine_tune else model_save_path
         print("Loading model from: ", model_save_path)
 
-        model = torch.load(model_save_path)
-    else:
-        model = models.models_dict[conv_model](num_classes=num_classes, class_weights=class_weights)
+        model.load_state_dict(torch.load(model_save_path, map_location=device_name))
+
     model.to(device_name)
 
     # visualise training set and model
     if initial_visualise:
-        visualise_generator(train_loader, num_images=5, model=model, run_evaluation=True if fine_tune else False, val_batch_size=batch_size)
+        visualise_generator(train_loader, num_images=5, model=model, run_evaluation=False, val_batch_size=batch_size)
 
     print("_________________________________________________________________________________________________")
     print("Training model: ", conv_model, "\n")
+    model.train()
 
     # Train the model using torch
     history = pt_train.fit(
@@ -405,6 +407,8 @@ def visualise_generator(
         val_batch_size=8,
         num_workers=MAX_THREADS,
         device=DEVICE,
+        best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
+        num_classes=NUM_CLASSES,
 ):
     if type(data_loader) == str:
         if data_loader == 'train':
@@ -418,7 +422,12 @@ def visualise_generator(
         data_loader = torch.utils.data.DataLoader(data_generator, batch_size=val_batch_size, shuffle=False, num_workers=num_workers)
 
     if model is None:
-        model = torch.load(model_save_path).eval()
+        # load best hyperparameters
+        best_hp = utils.load_dict_from_json(best_hp_json_save_path)
+
+        model = models.models_dict[best_hp["conv_model"]](num_classes=num_classes, class_weights=None)
+        model.load_state_dict(torch.load(model_save_path, map_location=device))
+
     model.eval()
     model.to(device)
 
