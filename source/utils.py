@@ -3,6 +3,7 @@ import shutil
 import warnings
 import numpy as np
 import json
+import matplotlib.pyplot as plt
 
 import config as cf
 
@@ -116,3 +117,31 @@ def load_dict_from_json(file_name):
         # print(d)
 
     return d
+
+
+def plot_history(history, save_path):
+    """
+    Plots the training and validation losses and accuracies.
+    """
+
+    losses = [x['train_loss'] for x in history]
+    val_losses = [x['val_loss'] for x in history]
+    accs = [x['train_acc'] for x in history]
+    val_accs = [x['val_acc'] for x in history]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+    ax1.plot(losses, '-x', label='train_loss')
+    ax1.plot(val_losses, '-x', label='val_loss')
+    ax1.set_xlabel('epoch')
+    ax1.set_ylabel('loss')
+    ax1.legend()
+    ax1.set_title('Loss vs. No. of epochs')
+
+    ax2.plot(accs, '-x', label='train_acc')
+    ax2.plot(val_accs, '-x', label='val_acc')
+    ax2.set_xlabel('epoch')
+    ax2.set_ylabel('accuracy')
+    ax2.legend()
+    ax2.set_title('Accuracy vs. No. of epochs')
+
+    plt.savefig(save_path)

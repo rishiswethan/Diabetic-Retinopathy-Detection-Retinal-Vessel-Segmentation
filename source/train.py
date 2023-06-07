@@ -171,9 +171,10 @@ def train(
         num_classes=NUM_CLASSES,
         device_name=DEVICE,
         initial_visualise=False,
-        continue_training=True,
+        continue_training=False,
         fine_tune=False,
         model_save_path=MODEL_SAVE_PATH_BEST_TRAIN_LOSS,
+        plot=False,
 ):
     """
     Once the best hyperparameters are found using tune_hyperparameters(), call this function to train the model with the best hyperparameters found.
@@ -278,6 +279,11 @@ def train(
         continue_training=continue_training,
     )
 
+    print("\n_________________________________________________________________________________________________\n")
+    if plot:
+        plot_save_path = model_save_path.replace(os.sep + model_save_path.split(os.sep)[-1], os.sep + 'plot.png')
+        utils.plot_history(history, plot_save_path)
+
     if metric and metric_mode:
         acc_min, acc_max = get_min_max_vale(history, metric)
         opt_result = acc_min if metric_mode == 'min' else acc_max
@@ -300,7 +306,7 @@ def train_using_best_hp(best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
     best_hp = utils.load_dict_from_json(best_hp_json_save_path)
 
     # train using the best hyperparameters
-    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience, continue_training=continue_training, fine_tune=fine_tune)
+    train(best_hp, initial_visualise=True, early_stopping_patience=early_stopping_patience, continue_training=continue_training, fine_tune=fine_tune, plot=True)
 
 
 def train_to_tune(hp_dict,
@@ -310,7 +316,7 @@ def train_to_tune(hp_dict,
     """
 
     # train using the given hyperparameters
-    return train(hp_dict, initial_visualise=False, early_stopping_patience=tuning_early_stopping_patience)
+    return train(hp_dict, initial_visualise=False, early_stopping_patience=tuning_early_stopping_patience, continue_training=False, fine_tune=None)
 
 
 def hyper_parameter_optimise(
@@ -395,6 +401,10 @@ def hyper_parameter_optimise(
     print(space_eval(search_space_hyperopt, best))
 
     # Our pt_utils.hyper_tuner class will save the best hyperparameters to a json file after each trial
+
+
+# def plot_history(history, metric='loss', metric_mode='min'):
+
 
 
 def visualise_generator(
