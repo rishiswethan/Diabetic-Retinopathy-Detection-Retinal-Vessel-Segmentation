@@ -348,6 +348,10 @@ class CustomImagePathGenerator:
 
         return image_path
 
+    def get_dataset_paths(self):
+        # get the train and test paths from each dataset and store them in a dict
+        dataset_paths = {}
+
 
 class DataGenerator(torch.utils.data.Dataset):
     def __init__(

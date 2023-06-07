@@ -14,7 +14,7 @@ DEVICE = 'cuda' if cuda.is_available() else 'cpu'
 
 INPUT_FOLDER = MAIN_PATH + 'input' + os.sep  # inputs parent folder
 _DATA_FOLDER = MAIN_PATH + 'data' + os.sep  # data folder
-MODELS_FOLDER = MAIN_PATH + 'models' + os.sep  # models folder
+MODELS_FOLDER = MAIN_PATH + 'trained_models' + os.sep  # models folder
 DATA_FOLDERS = {
     'org_data': _DATA_FOLDER + 'org_data' + os.sep,  # original dataset folder
     'training_data': _DATA_FOLDER + 'training_data' + os.sep,  # training dataset folder
@@ -50,8 +50,8 @@ BEST_HP_JSON_SAVE_PATH = MODELS_FOLDER + 'best_hp.json'
 TUNER_CSV_SAVE_PATH = MODELS_FOLDER + 'tuner.csv'
 TUNER_SAVE_PATH = MODELS_FOLDER + 'tuner.pkl'
 
-TRAIN_ACC_METRIC = "quadratic_weighted_kappa"
-OTHER_METRICS = ["f1_score"]
+TRAIN_ACC_METRIC = "quadratic_weighted_kappa"  # metric that will be used in "train_acc" and "val_acc" in the training callback object
+OTHER_METRICS = ["f1_score"]  # , ["f1_score", "precision_score", "recall_score"]
 
 TRAIN_TUNE_TARGET = 'val_acc'  # metric to tune for. 'val_acc' or 'train_acc' or 'val_loss' or 'train_loss', unless you want to use the custom metric in OTHER_METRICS
 TRAIN_TUNE_MODE = ['max', 'min'][0]  # acc is to be maximized, loss minimized, etc
@@ -144,7 +144,7 @@ TRAIN_TEST_SPLIT = 0.3  # percentage of images to be used for testing
 SQUARE_SIZE = 512  # size of the square image
 
 INITIAL_LR = 0.001
-INITIAL_EPOCH = 3
+INITIAL_EPOCH = 9999999
 
 # get number of CPUs available
 MAX_THREADS = 7

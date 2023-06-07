@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import config as cf
 
@@ -119,6 +120,26 @@ def load_dict_from_json(file_name):
     return d
 
 
+def get_min_max_value(history, key, get_index=False):
+    min = 99999
+    max = -99999
+    min_index = 0
+    max_index = 0
+    for i in range(len(history)):
+        if history[i][key] < min:
+            min = history[i][key]
+            min_index = i
+
+        if history[i][key] > max:
+            max = history[i][key]
+            max_index = i
+
+    if get_index:
+        return min, max, min_index, max_index
+
+    return min, max
+
+
 def plot_history(history, save_path):
     """
     Plots the training and validation losses and accuracies.
@@ -145,3 +166,21 @@ def plot_history(history, save_path):
     ax2.set_title('Accuracy vs. No. of epochs')
 
     plt.savefig(save_path)
+
+
+
+def plot_confusion_matrix(cm, class_names, save_path):
+    """
+    Plots the confusion matrix. Set parameter `cm` to the confusion matrix and
+    `class_names` to the names of the classes.
+    """
+    fig, ax = plt.subplots(figsize=(10, 10))
+    cm = np.sum(cm, axis=0).reshape(len(class_names), len(class_names))  # Summing up all confusion matrices and reshaping to a 2D array
+    sns.heatmap(cm, annot=True, fmt='.2f',
+                xticklabels=class_names,
+                yticklabels=class_names,
+                cmap='Blues', ax=ax)
+    plt.ylabel('Actual')
+    plt.xlabel('Predicted')
+    plt.savefig(save_path)
+

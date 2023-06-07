@@ -8,6 +8,7 @@ import source.config as cf
 
 TRAIN_ACC_METRIC = cf.TRAIN_ACC_METRIC
 OTHER_METRICS = cf.OTHER_METRICS
+NUM_CLASSES = cf.NUM_CLASSES
 
 
 class CustomModelBase(pt_train.CustomModelBase):
@@ -17,6 +18,7 @@ class CustomModelBase(pt_train.CustomModelBase):
     def __init__(
             self,
             class_weights,
+            num_classes=NUM_CLASSES,
             acc_func_name=TRAIN_ACC_METRIC,
             other_acc_metrics=OTHER_METRICS,
     ):
@@ -26,35 +28,15 @@ class CustomModelBase(pt_train.CustomModelBase):
         # self.accuracy_function = pt_train._f1_score
         # self.accuracy_function = pt_train._accuracy
         # self.accuracy_function = pt_train._quadratic_weighted_kappa
-        self.train_criterion = pt_train.get_metric(acc_func_name)
         # self.train_criterion = nn.CrossEntropyLoss(weight=self.class_weights)
+        self.accuracy_function = pt_train.get_metric(acc_func_name, args_dict={"num_classes": num_classes})
+
+        self.loss_function = pt_train.FocalLoss()
 
         self.other_metrics_function = pt_train._calculate_other_metrics
         self.other_metrics = other_acc_metrics
 
-    # def training_step(self, batch):
-    #     # print("batch: ", len(batch))
-    #     images, labels = batch
-    #
-    #     out = self(images)  # Generate predictions
-    #
-    #     loss = self.train_criterion(out, labels)  # Calculate loss
-    #     acc = self.accuracy_function(out, labels)  # Calculate accuracy
-    #
-    #     return loss, acc
-    #
-    # def validation_step(self, batch):
-    #     images, labels = batch
-    #
-    #     out = self(images)  # Generate predictions
-    #
-    #     # loss = F.cross_entropy(out, labels, weight=None)  # We are not using class weights for validation since data is balanced in validation set
-    #     loss = self.train_criterion(out, labels)  # same loss function as training
-    #
-    #     # acc = pt_train._accuracy(out, labels)  # Calculate accuracy
-    #     acc = self.accuracy_function(out, labels)  # Same accuracy function as training
-    #
-    #     return {'val_loss': loss.detach(), 'val_acc': acc}
+        self.num_classes = num_classes
 
 
 # 57M parameters

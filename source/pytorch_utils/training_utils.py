@@ -5,9 +5,10 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import gc
 import traceback
-from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import cohen_kappa_score, precision_score, recall_score, f1_score
 import numpy as np
 import warnings
+import torchmetrics
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -17,7 +18,9 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, module='tkinter')
 def _evaluate(
         model: torch.nn.Module,
         val_loader: torch.utils.data.DataLoader,
-        device=device
+        device=device,
+        custom_metrics=None,
+        custom_metrics_args_dict=None
 ):
     model.eval()
     outputs = []
@@ -25,54 +28,113 @@ def _evaluate(
         for batch in val_loader:
             # Move the input tensors to the GPU if available
             batch = [tensor.to(device) for tensor in batch]
-            outputs.append(model.validation_step(batch))
+            outputs.append(model.validation_step(batch, custom_metrics=custom_metrics, args_dict=custom_metrics_args_dict))
+
+    # return the custom metrics only if they were provided
+    if custom_metrics is not None:
+        # print("outputs: ", outputs)
+        cust_metric_vals = []
+        for i in range(len(outputs)):
+            cust_metrics = []
+            for j in range(len(custom_metrics)):
+                cust_metrics.append(outputs[i]["val_" + custom_metrics[j]].cpu().numpy())
+            cust_metric_vals.append(cust_metrics)
+
+        return cust_metric_vals
+
     return model.validation_epoch_end(outputs)
 
 
-def _accuracy(
-        outputs: torch.Tensor,
-        labels: torch.Tensor,
-):
-    preds = torch.argmax(outputs, dim=1)
-    labels = torch.argmax(labels, dim=1)
-    return torch.tensor(torch.sum(preds == labels).item() / len(preds))
+def _accuracy(args_dict=None):
+    def accuracy(outputs: torch.Tensor, labels: torch.Tensor):
+        preds = torch.argmax(outputs, dim=1)
+        labels = torch.argmax(labels, dim=1)
+
+        return torch.tensor(torch.sum(preds == labels).item() / len(preds))
+
+    return accuracy
 
 
-def _f1_score(outputs: torch.Tensor, labels: torch.Tensor):
-    preds = torch.argmax(outputs, dim=1)
-    labels = torch.argmax(labels, dim=1)
+def _f1_score(args_dict=None):
+    num_classes = args_dict["num_classes"]
+    def f1_score(outputs: torch.Tensor, labels: torch.Tensor):
 
-    # Precision: True positives / (True positives + False positives)
-    tp = torch.sum((preds == 1) & (labels == 1)).float()
-    fp = torch.sum((preds == 1) & (labels == 0)).float()
-    precision = tp / (tp + fp + 1e-8)  # Adding a small number to avoid division by zero
+        preds = torch.argmax(outputs, dim=1)
+        labels = torch.argmax(labels, dim=1)
 
-    # Recall: True positives / (True positives + False negatives)
-    fn = torch.sum((preds == 0) & (labels == 1)).float()
-    recall = tp / (tp + fn + 1e-8)  # Adding a small number to avoid division by zero
+        f1 = torchmetrics.F1Score(num_classes=num_classes, average='weighted', task='multiclass').to(device)
+        f1 = f1(preds, labels)
 
-    # F1 Score: Harmonic mean of precision and recall
-    f1 = 2 * precision * recall / (precision + recall + 1e-8)  # Adding a small number to avoid division by zero
+        return f1
+    return f1_score
 
-    return f1
+def _precision_score(args_dict=None):
+    num_classes = args_dict["num_classes"]
+    def precision_score(outputs: torch.Tensor, labels: torch.Tensor):
+
+        preds = torch.argmax(outputs, dim=1)
+        labels = torch.argmax(labels, dim=1)
+
+        precision = torchmetrics.Precision(num_classes=num_classes, average='weighted', task='multiclass').to(device)
+        precision = precision(preds, labels)
+
+        return precision
+    return precision_score
 
 
-def _quadratic_weighted_kappa(outputs: torch.Tensor, labels: torch.Tensor):
-    preds = torch.argmax(outputs, dim=1)
-    labels = torch.argmax(labels, dim=1)
+def _recall_score(args_dict=None):
+    num_classes = args_dict["num_classes"]
+    def recall_score(outputs: torch.Tensor, labels: torch.Tensor):
 
-    # Convert tensors to numpy arrays for use with scikit-learn
-    preds_np = preds.detach().cpu().numpy()
-    labels_np = labels.detach().cpu().numpy()
+        preds = torch.argmax(outputs, dim=1)
+        labels = torch.argmax(labels, dim=1)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=RuntimeWarning)
-        kappa = cohen_kappa_score(labels_np, preds_np, weights='quadratic')
+        recall = torchmetrics.Recall(num_classes=num_classes, average='weighted', task='multiclass').to(device)
+        recall = recall(preds, labels)
 
-    if np.isnan(kappa) or np.isinf(kappa):
-        kappa = 0
+        return recall
+    return recall_score
 
-    return torch.tensor(kappa)
+
+def _quadratic_weighted_kappa(args_dict=None):
+    def quadratic_weighted_kappa(outputs: torch.Tensor, labels: torch.Tensor):
+        preds = torch.argmax(outputs, dim=1)
+        labels = torch.argmax(labels, dim=1)
+
+        # Convert tensors to numpy arrays for use with scikit-learn
+        preds_np = preds.detach().cpu().numpy()
+        labels_np = labels.detach().cpu().numpy()
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RuntimeWarning)
+            kappa = cohen_kappa_score(labels_np, preds_np, weights='quadratic')
+
+        if np.isnan(kappa) or np.isinf(kappa):
+            kappa = 0
+
+        return torch.tensor(kappa)
+
+    return quadratic_weighted_kappa
+
+
+def _confusion_matrix_elements_multiclass(args_dict):
+    num_classes = args_dict["num_classes"]
+
+    def confusion_matrix_elements_multiclass(
+            outputs: torch.Tensor,
+            labels: torch.Tensor,
+    ):
+        preds = torch.argmax(outputs, dim=1)
+        labels = torch.argmax(labels, dim=1)
+
+        cm = torch.zeros((num_classes, num_classes), device=outputs.device)
+
+        for i in range(labels.shape[0]):
+            cm[labels[i], preds[i]] += 1
+
+        return cm
+
+    return confusion_matrix_elements_multiclass
 
 
 class FocalLoss(nn.Module):
@@ -82,7 +144,7 @@ class FocalLoss(nn.Module):
         self.gamma = gamma
         self.reduction = reduction
 
-    def forward(self, inputs, targets):
+    def forward(self, inputs, targets, **kwargs):
         BCE_loss = F.cross_entropy(inputs, targets, reduction='none')
         pt = torch.exp(-BCE_loss)
         F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
@@ -93,7 +155,7 @@ class FocalLoss(nn.Module):
             return F_loss.mean()
 
 
-def get_metric(metric_name="accuracy"):
+def get_metric(metric_name="accuracy", args_dict=None):
     """
     Returns the metric function given the metric name
     """
@@ -101,15 +163,19 @@ def get_metric(metric_name="accuracy"):
         "accuracy": _accuracy,
         "f1_score": _f1_score,
         "quadratic_weighted_kappa": _quadratic_weighted_kappa,
+        "precision_score": _precision_score,
+        "recall_score": _recall_score,
+        "confusion_matrix_elements_multiclass": _confusion_matrix_elements_multiclass,
     }
-    return metrics[metric_name]
+
+    return metrics[metric_name](args_dict=args_dict)
 
 
-def _calculate_other_metrics(outputs: torch.Tensor, labels: torch.Tensor, other_metrics):
+def _calculate_other_metrics(outputs: torch.Tensor, labels: torch.Tensor, other_metrics, args_dict=None):
 
     other_metrics_values = {}
     for metric in other_metrics:
-        metric_func = get_metric(metric)
+        metric_func = get_metric(metric, args_dict)
         other_metrics_values[metric] = metric_func(outputs, labels)
 
     return other_metrics_values
@@ -277,14 +343,17 @@ class CustomModelBase(torch.nn.Module):
             class_weights=None,
             loss_function=F.cross_entropy,
             acc_func_name="accuracy",
-            other_acc_metrics=["f1_score"]
+            other_acc_metrics=["f1_score"],
+            num_classes=5,
     ):
         super(CustomModelBase, self).__init__()
         self.class_weights = class_weights
         self.loss_function = loss_function
-        self.accuracy_function = get_metric(acc_func_name)
+        self.args_dict = {"num_classes": num_classes}
+        self.accuracy_function = get_metric(acc_func_name, args_dict=self.args_dict)
         self.other_metrics_function = _calculate_other_metrics
         self.other_metrics = other_acc_metrics
+        self.num_classes = num_classes
 
     def training_step(self, batch: list):
         """
@@ -309,11 +378,11 @@ class CustomModelBase(torch.nn.Module):
 
         other_metrics = None
         if self.other_metrics is not None:
-            other_metrics = self.other_metrics_function(out, labels, self.other_metrics)
+            other_metrics = self.other_metrics_function(out, labels, self.other_metrics, self.args_dict)
 
         return loss, acc, other_metrics
 
-    def validation_step(self, batch: list):
+    def validation_step(self, batch: list, custom_metrics=None, args_dict=None):
         """
         The validation step. This is meant to be overridden if you want to use a custom loss function.
         Parameters
@@ -328,6 +397,12 @@ class CustomModelBase(torch.nn.Module):
         acc : torch.Tensor
         """
 
+        if custom_metrics is None:
+            custom_metrics = self.other_metrics
+
+        if args_dict is None:
+            args_dict = self.args_dict
+
         images, labels = batch
         out = self(images)  # Generate predictions
 
@@ -335,15 +410,11 @@ class CustomModelBase(torch.nn.Module):
         acc = self.accuracy_function(out, labels)  # Calculate accuracy
 
         other_metrics = None
-        if self.other_metrics is not None:
-            other_metrics = self.other_metrics_function(out, labels, self.other_metrics)
+        if custom_metrics is not None:
+            other_metrics = self.other_metrics_function(out, labels, custom_metrics, args_dict=args_dict)
 
-        # ret_dict = {"val_loss": loss, "val_acc": acc}
-        ret_dict = {
-            f"val_loss": loss,
-            f"val_acc": acc
-        }
-        for metric in self.other_metrics:
+        ret_dict = {f"val_loss": loss, f"val_acc": acc}
+        for metric in custom_metrics:
             ret_dict['val_' + metric] = other_metrics[metric]
 
         return ret_dict
@@ -365,9 +436,9 @@ class CustomModelBase(torch.nn.Module):
                 batch_accs = [x['val_' + metric] for x in outputs]
                 other_metrics[metric] = torch.stack(batch_accs).mean()
 
-        ret_dict = {"val_loss": epoch_loss.cpu(), "val_acc": epoch_acc.cpu()}
+        ret_dict = {"val_loss": epoch_loss.cpu().item(), "val_acc": epoch_acc.cpu().item()}
         for metric in self.other_metrics:
-            ret_dict['val_' + metric] = other_metrics[metric].cpu()
+            ret_dict['val_' + metric] = other_metrics[metric].cpu().item()
 
         return ret_dict
 

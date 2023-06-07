@@ -202,17 +202,6 @@ def train(
         The best value of the metric found during training. This is the value that will be used to find the best hyperparameters.
     """
 
-    def get_min_max_vale(history, key):
-        min = 99999
-        max = -99999
-        for i in range(len(history)):
-            if history[i][key] < min:
-                min = history[i][key]
-            if history[i][key] > max:
-                max = history[i][key]
-
-        return min, max
-
     # Clear memory before training
     torch.cuda.empty_cache()
     gc.collect()
@@ -280,13 +269,12 @@ def train(
     )
 
     print("\n_________________________________________________________________________________________________\n")
-    print("history: ", history)
     if plot:
         plot_save_path = model_save_path.replace(os.sep + model_save_path.split(os.sep)[-1], os.sep + 'plot.png')
         utils.plot_history(history, plot_save_path)
 
     if metric and metric_mode:
-        acc_min, acc_max = get_min_max_vale(history, metric)
+        acc_min, acc_max = utils.get_min_max_value(history, metric)
         opt_result = acc_min if metric_mode == 'min' else acc_max
 
         # set to - if metric_mode is min, else set to +. This is for hyperopt to work
@@ -420,6 +408,7 @@ def visualise_generator(
         device=DEVICE,
         best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
         num_classes=NUM_CLASSES,
+        get_confusion_matrix=True,
 ):
     if type(data_loader) == str:
         if data_loader == 'train':
@@ -445,8 +434,22 @@ def visualise_generator(
     # evaluate model on data_loader
     if run_evaluation:
         print("\nEvaluating model on data_loader: ")
-        results = pt_train._evaluate(model, data_loader)
+
+        results = pt_train._evaluate(model, data_loader, device=device)
         print("Results: ", results)
+
+        if get_confusion_matrix:
+            results = pt_train._evaluate(
+                model, data_loader,
+                device=device,
+                custom_metrics=["confusion_matrix_elements_multiclass"],
+                custom_metrics_args_dict={"num_classes": num_classes}
+            )
+            results = np.array(results)  # Convert results to a numpy array
+
+            plot_save_path = model_save_path.replace(os.sep + model_save_path.split(os.sep)[-1], os.sep + 'plot.png')
+            utils.plot_confusion_matrix(results, list(full_labels.keys()), plot_save_path)
+            print("\nConfusion matrix saved to: ", plot_save_path, "\n")
 
     cnt = 0
     for batch in data_loader:
@@ -468,6 +471,7 @@ def visualise_generator(
             label = int(torch.argmax(label, dim=0).detach().cpu().numpy())
             print("Label: ", label, "Label name: ", full_labels[label], "\n")
 
+            plt.close('all')
             plt.figure(figsize=(10, 10))
             plt.imshow(image)
             plt.title("Label name: " + str(full_labels[label]) + " | Pred name: " + str(full_labels[pred]))
