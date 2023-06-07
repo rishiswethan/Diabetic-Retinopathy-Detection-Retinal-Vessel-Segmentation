@@ -50,29 +50,32 @@ BEST_HP_JSON_SAVE_PATH = MODELS_FOLDER + 'best_hp.json'
 TUNER_CSV_SAVE_PATH = MODELS_FOLDER + 'tuner.csv'
 TUNER_SAVE_PATH = MODELS_FOLDER + 'tuner.pkl'
 
-TRAIN_TUNE_TARGET = 'val_acc'  # metric to tune for
+TRAIN_ACC_METRIC = "quadratic_weighted_kappa"
+OTHER_METRICS = ["f1_score"]
+
+TRAIN_TUNE_TARGET = 'val_acc'  # metric to tune for. 'val_acc' or 'train_acc' or 'val_loss' or 'train_loss', unless you want to use the custom metric in OTHER_METRICS
 TRAIN_TUNE_MODE = ['max', 'min'][0]  # acc is to be maximized, loss minimized, etc
 
 ######################################################################################################################################################
 # Training parameters
 
 _TUNING_MODELS_LIST = [
-    # 'resnet18',
-    # 'resnet34',
-    # 'resnet50',
-    # 'resnet101',
-    # 'resnet152',
-    # 'inception',
-    # 'eff_b0',
-    # 'eff_b1',
-    # 'eff_b2',
+    'resnet18',
+    'resnet34',
+    'resnet50',
+    'resnet101',
+    'resnet152',
+    'inception',
+    'eff_b0',
+    'eff_b1',
+    'eff_b2',
     'eff_b3',
-    # 'eff_b4',
-    # 'eff_b5',
-    # 'eff_v2_s',
-    # 'convnext_t',
-    # 'mobilenet_v3_small',
-    # 'mobilenet_v3_large',
+    'eff_b4',
+    'eff_b5',
+    'eff_v2_s',
+    'convnext_t',
+    'mobilenet_v3_small',
+    'mobilenet_v3_large',
     # 'vit_b_16'
 ]
 TUNE_HP_RANGES = {
@@ -105,7 +108,7 @@ TUNE_HP_RANGES = {
         'choice'),
 
     'use_colour_augmentation': (
-        [True, False],
+        [False],
         'choice'),
 
     'conv_model': (_TUNING_MODELS_LIST, 'choice'),
@@ -141,7 +144,7 @@ TRAIN_TEST_SPLIT = 0.3  # percentage of images to be used for testing
 SQUARE_SIZE = 512  # size of the square image
 
 INITIAL_LR = 0.001
-INITIAL_EPOCH = 999999
+INITIAL_EPOCH = 3
 
 # get number of CPUs available
 MAX_THREADS = 7

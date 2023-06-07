@@ -3,46 +3,58 @@ from torchvision import models
 import pretrainedmodels
 
 import pytorch_utils.training_utils as pt_train
+import source.config as cf
+
+
+TRAIN_ACC_METRIC = cf.TRAIN_ACC_METRIC
+OTHER_METRICS = cf.OTHER_METRICS
 
 
 class CustomModelBase(pt_train.CustomModelBase):
     """
     ModelBase override for training and validation steps
     """
-    def __init__(self, class_weights):
+    def __init__(
+            self,
+            class_weights,
+            acc_func_name=TRAIN_ACC_METRIC,
+            other_acc_metrics=OTHER_METRICS,
+    ):
         super(CustomModelBase, self).__init__()
         self.class_weights = class_weights
 
         # self.accuracy_function = pt_train._f1_score
         # self.accuracy_function = pt_train._accuracy
-        self.accuracy_function = pt_train._quadratic_weighted_kappa
-
-        self.train_criterion = pt_train.FocalLoss()
+        # self.accuracy_function = pt_train._quadratic_weighted_kappa
+        self.train_criterion = pt_train.get_metric(acc_func_name)
         # self.train_criterion = nn.CrossEntropyLoss(weight=self.class_weights)
 
-    def training_step(self, batch):
-        # print("batch: ", len(batch))
-        images, labels = batch
+        self.other_metrics_function = pt_train._calculate_other_metrics
+        self.other_metrics = other_acc_metrics
 
-        out = self(images)  # Generate predictions
-
-        loss = self.train_criterion(out, labels)  # Calculate loss
-        acc = self.accuracy_function(out, labels)  # Calculate accuracy
-
-        return loss, acc
-
-    def validation_step(self, batch):
-        images, labels = batch
-
-        out = self(images)  # Generate predictions
-
-        # loss = F.cross_entropy(out, labels, weight=None)  # We are not using class weights for validation since data is balanced in validation set
-        loss = self.train_criterion(out, labels)  # same loss function as training
-
-        # acc = pt_train._accuracy(out, labels)  # Calculate accuracy
-        acc = self.accuracy_function(out, labels)  # Same accuracy function as training
-
-        return {'val_loss': loss.detach(), 'val_acc': acc}
+    # def training_step(self, batch):
+    #     # print("batch: ", len(batch))
+    #     images, labels = batch
+    #
+    #     out = self(images)  # Generate predictions
+    #
+    #     loss = self.train_criterion(out, labels)  # Calculate loss
+    #     acc = self.accuracy_function(out, labels)  # Calculate accuracy
+    #
+    #     return loss, acc
+    #
+    # def validation_step(self, batch):
+    #     images, labels = batch
+    #
+    #     out = self(images)  # Generate predictions
+    #
+    #     # loss = F.cross_entropy(out, labels, weight=None)  # We are not using class weights for validation since data is balanced in validation set
+    #     loss = self.train_criterion(out, labels)  # same loss function as training
+    #
+    #     # acc = pt_train._accuracy(out, labels)  # Calculate accuracy
+    #     acc = self.accuracy_function(out, labels)  # Same accuracy function as training
+    #
+    #     return {'val_loss': loss.detach(), 'val_acc': acc}
 
 
 # 57M parameters

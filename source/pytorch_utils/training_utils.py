@@ -31,7 +31,7 @@ def _evaluate(
 
 def _accuracy(
         outputs: torch.Tensor,
-        labels: torch.Tensor
+        labels: torch.Tensor,
 ):
     preds = torch.argmax(outputs, dim=1)
     labels = torch.argmax(labels, dim=1)
@@ -93,6 +93,28 @@ class FocalLoss(nn.Module):
             return F_loss.mean()
 
 
+def get_metric(metric_name="accuracy"):
+    """
+    Returns the metric function given the metric name
+    """
+    metrics = {
+        "accuracy": _accuracy,
+        "f1_score": _f1_score,
+        "quadratic_weighted_kappa": _quadratic_weighted_kappa,
+    }
+    return metrics[metric_name]
+
+
+def _calculate_other_metrics(outputs: torch.Tensor, labels: torch.Tensor, other_metrics):
+
+    other_metrics_values = {}
+    for metric in other_metrics:
+        metric_func = get_metric(metric)
+        other_metrics_values[metric] = metric_func(outputs, labels)
+
+    return other_metrics_values
+
+
 def fit(
         epochs: int,
         lr: float,
@@ -106,7 +128,7 @@ def fit(
         device=device,
         num_retries_inner=10,
         max_retry=10,
-        evaluate=_evaluate
+        evaluate=_evaluate,
 ):
     """
     Meant to resemble the fit function in keras.
@@ -146,6 +168,7 @@ def fit(
         model.train()  # Make sure the model is in training mode at each epoch, because it is set to eval() in evaluate()
         train_losses = []
         accuracies = []
+        other_metrics_values = []
         print("LR: ", optimizer.param_groups[0]['lr'])
         # Wrap the train_loader with tqdm to create a progress bar
 
@@ -160,7 +183,7 @@ def fit(
                     flag = False
                     for i in range(num_retries_inner):
                         try:
-                            loss, acc = model.training_step(batch)
+                            loss, acc, oth_metrics_value = model.training_step(batch)
                             flag = True
                             break
                         except:
@@ -183,6 +206,9 @@ def fit(
                     # Update the progress bar with the current loss and accuracy
                     progress_bar.set_postfix(loss=loss.item(), accuracy=acc.item())
 
+                    if oth_metrics_value is not None:
+                        other_metrics_values.append(oth_metrics_value)
+
                 num_retry = 0
                 break
             except:
@@ -198,8 +224,13 @@ def fit(
                     raise RuntimeError(f"Training failed {max_retry} times")
 
         result = evaluate(model, val_loader, device)
-        result['train_loss'] = torch.stack(train_losses).mean().item()
-        result['train_acc'] = torch.stack(accuracies).mean().item()
+        result['train_loss'] = torch.stack(train_losses).cpu().mean().item()
+        result['train_acc'] = torch.stack(accuracies).cpu().mean().item()
+
+        # add other metrics to result
+        for metric_dict in other_metrics_values:
+            for metric, value in metric_dict.items():
+                result["train_" + metric] = value.cpu().item()
 
         if callbacks_function is not None:
             defined_callbacks, stop_flag = callbacks_function(
@@ -235,21 +266,25 @@ class CustomModelBase(torch.nn.Module):
     loss_function
         The loss function to use. Must be touch.nn.functional. This should be a function that takes in the model outputs, the labels, and any other arguments that are needed.
         Defaults to torch.nn.functional.cross_entropy.
-    accuracy_function
-        The accuracy function to use. This should be a function that takes in the model outputs and the labels and returns the accuracy.
-        Defaults to the accuracy function defined in this module.
+    acc_func_name
+        The accuracy function to use. This should be a string that is a key in the dictionary defined in get_metrics(). Defaults to "accuracy".
+    other_acc_metrics
+        A list of other metrics to calculate. This should be a list of strings that are keys in the dictionary defined in get_metrics(). Defaults to ["f1_score"].
     """
 
     def __init__(
             self,
             class_weights=None,
             loss_function=F.cross_entropy,
-            accuracy_function=_accuracy
+            acc_func_name="accuracy",
+            other_acc_metrics=["f1_score"]
     ):
         super(CustomModelBase, self).__init__()
         self.class_weights = class_weights
         self.loss_function = loss_function
-        self.accuracy_function = accuracy_function
+        self.accuracy_function = get_metric(acc_func_name)
+        self.other_metrics_function = _calculate_other_metrics
+        self.other_metrics = other_acc_metrics
 
     def training_step(self, batch: list):
         """
@@ -271,7 +306,12 @@ class CustomModelBase(torch.nn.Module):
 
         loss = self.loss_function(out, labels, weight=self.class_weights)  # Calculate loss with class weights
         acc = self.accuracy_function(out, labels)  # Calculate accuracy
-        return loss, acc
+
+        other_metrics = None
+        if self.other_metrics is not None:
+            other_metrics = self.other_metrics_function(out, labels, self.other_metrics)
+
+        return loss, acc, other_metrics
 
     def validation_step(self, batch: list):
         """
@@ -293,7 +333,20 @@ class CustomModelBase(torch.nn.Module):
 
         loss = self.loss_function(out, labels, weight=self.class_weights)  # Calculate loss with class weights
         acc = self.accuracy_function(out, labels)  # Calculate accuracy
-        return {'val_loss': loss.detach(), 'val_acc': acc}
+
+        other_metrics = None
+        if self.other_metrics is not None:
+            other_metrics = self.other_metrics_function(out, labels, self.other_metrics)
+
+        # ret_dict = {"val_loss": loss, "val_acc": acc}
+        ret_dict = {
+            f"val_loss": loss,
+            f"val_acc": acc
+        }
+        for metric in self.other_metrics:
+            ret_dict['val_' + metric] = other_metrics[metric]
+
+        return ret_dict
 
     def validation_epoch_end(self, outputs):
         """
@@ -304,7 +357,19 @@ class CustomModelBase(torch.nn.Module):
         epoch_loss = torch.stack(batch_losses).mean()  # Combine losses
         batch_accs = [x['val_acc'] for x in outputs]
         epoch_acc = torch.stack(batch_accs).mean()  # Combine accuracies
-        return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}
+
+        other_metrics = None
+        if self.other_metrics is not None:
+            other_metrics = {}
+            for metric in self.other_metrics:
+                batch_accs = [x['val_' + metric] for x in outputs]
+                other_metrics[metric] = torch.stack(batch_accs).mean()
+
+        ret_dict = {"val_loss": epoch_loss.cpu(), "val_acc": epoch_acc.cpu()}
+        for metric in self.other_metrics:
+            ret_dict['val_' + metric] = other_metrics[metric].cpu()
+
+        return ret_dict
 
     def epoch_end(self, epoch, result):
         """
@@ -315,5 +380,7 @@ class CustomModelBase(torch.nn.Module):
             f"train_loss: {result['train_loss']:.4f}, val_loss: {result['val_loss']:.4f}\n"
             f"train_acc: {result['train_acc']:.4f}, val_acc: {result['val_acc']:.4f}"
         )
+        for metric in self.other_metrics:
+            print(f"train_{metric}: {result['train_' + metric]:.4f}, val_{metric}: {result['val_' + metric]:.4f}")
 
         print()

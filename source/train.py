@@ -280,6 +280,7 @@ def train(
     )
 
     print("\n_________________________________________________________________________________________________\n")
+    print("history: ", history)
     if plot:
         plot_save_path = model_save_path.replace(os.sep + model_save_path.split(os.sep)[-1], os.sep + 'plot.png')
         utils.plot_history(history, plot_save_path)
