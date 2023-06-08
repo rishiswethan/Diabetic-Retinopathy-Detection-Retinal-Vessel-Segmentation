@@ -11,6 +11,8 @@ from hyperopt import fmin, space_eval, Trials
 import pytorch_utils.callbacks as pt_callbacks
 import pytorch_utils.training_utils as pt_train
 import pytorch_utils.hyper_tuner as pt_tuner
+import pytorch_utils.visualize as pt_visualize
+from pytorch_grad_cam import GradCAM
 
 import data_handling
 import config as cf
@@ -409,6 +411,8 @@ def visualise_generator(
         best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
         num_classes=NUM_CLASSES,
         get_confusion_matrix=True,
+        grad_cam=True,
+        visualise_full_batch=True,
 ):
     if type(data_loader) == str:
         if data_loader == 'train':
@@ -451,12 +455,36 @@ def visualise_generator(
             utils.plot_confusion_matrix(results, list(full_labels.keys()), plot_save_path)
             print("\nConfusion matrix saved to: ", plot_save_path, "\n")
 
+    if grad_cam:
+        # Get all conv layers from the given model and get the last layer to visualize in GradCAM
+        layers = pt_visualize.get_all_conv_layers(model, grad_cam=True, feature_map=False)
+        grad_layer = layers[-1]
+        cam = GradCAM(model=model, target_layers=[grad_layer], use_cuda=True)
+
     cnt = 0
+    if visualise_full_batch:
+        num_images = 999999
+
     for batch in data_loader:
+        if visualise_full_batch:
+            plt.close('all')
+            plt.figure(figsize=(25, 25))
+            cnt = 0
+
         for (image, label) in zip(batch[0], batch[1]):
 
             print("\nImage: ", image.shape)
             print("Label: ", label)
+
+            # get grad cam
+            if grad_cam:
+                # add an extra dimension to the image
+                img = image.unsqueeze(0).to(device)
+                grad_image = cam(input_tensor=img, targets=None)
+                grad_image = np.transpose(grad_image, (1, 2, 0))
+                grad_image = np.squeeze(grad_image)
+                grad_image = np.array(grad_image * 255., dtype=np.uint8)
+                # print("Grad image: ", grad_image.shape, np.unique(grad_image))
 
             # get prediction
             image = image.unsqueeze(0).to(device)
@@ -467,16 +495,56 @@ def visualise_generator(
 
             image = image.squeeze(0).cpu().numpy()
             image = np.transpose(image, (1, 2, 0))
+            image_uint8 = np.array(image * 255., dtype=np.uint8)
 
             label = int(torch.argmax(label, dim=0).detach().cpu().numpy())
             print("Label: ", label, "Label name: ", full_labels[label], "\n")
 
-            plt.close('all')
-            plt.figure(figsize=(10, 10))
+            if not visualise_full_batch and grad_cam:
+                plt.close('all')
+                plt.figure(figsize=(30, 12))
+                plt.subplot(1, 2, 1)
+            elif not visualise_full_batch and not grad_cam:
+                plt.close('all')
+                plt.figure(figsize=(12, 12))
+            elif visualise_full_batch:
+                if grad_cam:
+                    print("cnt: ", ((cnt) * 2) + 1)
+                    print("round(np.ceil(val_batch_size / 4) * 4): ", round(np.ceil(val_batch_size / 4) * 2))
+                    print("round(np.ceil(val_batch_size / 8) * 2): ", round(np.ceil(val_batch_size / 8) * 4))
+                    plt.subplot(round(np.ceil(val_batch_size / 4) * 2),
+                                round(np.ceil(val_batch_size / 8) * 4),
+                                (cnt * 2) + 1)
+                else:
+                    plt.subplot(round(np.ceil(val_batch_size / 4) * 1),
+                                round(np.ceil(val_batch_size / 8) * 4),
+                                cnt + 1)
+
             plt.imshow(image)
-            plt.title("Label name: " + str(full_labels[label]) + " | Pred name: " + str(full_labels[pred]))
-            plt.show()
+            plt.title("Label name: " + str(full_labels[label]) + " | Pred name: " + str(full_labels[pred]) + " | Image " + str(cnt + 1))
+
+            if grad_cam:
+                grad_image = pt_visualize.overlay_gradcam_on_image(img=image_uint8, grad_cam_pil=grad_image, alpha=0.41, square_size=image.shape[0])
+
+                if visualise_full_batch:
+                    plt.subplot(round(np.ceil(val_batch_size / 4) * 2),
+                                round(np.ceil(val_batch_size / 8) * 4),
+                                (cnt * 2) + 2)
+                else:
+                    plt.subplot(round(np.ceil(val_batch_size / 4) * 1),
+                                round(np.ceil(val_batch_size / 8) * 4),
+                                cnt + 2)
+
+                plt.imshow(grad_image)
+                plt.title("GradCAM | Image " + str(cnt + 1))
+
+            if not visualise_full_batch:
+                plt.show()
 
             cnt += 1
             if num_images and cnt >= num_images:
                 return
+
+        if visualise_full_batch:
+            plt.show()
+            plt.close('all')

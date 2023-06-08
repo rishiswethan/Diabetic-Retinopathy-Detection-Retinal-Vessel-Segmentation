@@ -101,3 +101,29 @@ def visualise_feature_maps(feature_map, feature_map_name):
         axes[i // num_cols, i % num_cols].axis("off")
 
     plt.savefig(feature_map_name)
+
+
+def get_all_conv_layers(model, modules_list=None, conv_layers=[], depth=0, grad_cam=False, feature_map=False):
+    """
+    Get all the convolutional layers of a given model
+    """
+    if modules_list is None:
+        modules_list = list(model.modules())
+
+    # get all the conv layers so that the last layer is used for grad cam visualisation
+    if grad_cam and (not feature_map):
+        for layer in modules_list:
+            if isinstance(layer, torch.nn.Conv2d):
+                conv_layers.append(layer)
+            elif isinstance(layer, torch.nn.Sequential):
+                get_all_conv_layers(model, layer, conv_layers, depth=depth + 1)
+
+    # get all inner conv layers for feature map visualisation
+    elif feature_map and (not grad_cam):
+        for layer in modules_list:
+            if isinstance(layer, torch.nn.Conv2d) and depth > 0:
+                conv_layers.append(layer)
+            elif isinstance(layer, torch.nn.Sequential) and depth > 0:
+                get_all_conv_layers(model, layer, conv_layers, depth=depth + 1)
+
+    return conv_layers
