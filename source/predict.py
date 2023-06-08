@@ -8,6 +8,9 @@ import data_handling
 import models
 import utils
 
+import pytorch_utils.visualize as pt_visualize
+from pytorch_grad_cam import GradCAM
+
 MODEL_SAVE_PATH = cf.MODEL_SAVE_PATH_BEST_VAL_LOSS
 IMAGE_SIZE = cf.SQUARE_SIZE
 FULL_LABELS = cf.FULL_LABELS
@@ -35,7 +38,8 @@ class Predict:
             verbose=False,
             labels=FULL_LABELS,
             best_hp_json_save_path=BEST_HP_JSON_SAVE_PATH,
-            num_classes=NUM_CLASSES
+            num_classes=NUM_CLASSES,
+            show_grad_cam=True,
             ):
         """
         Class to help initialise the model and encapsulate the predict function. Use this class to use the predict function encapsulated within it.
@@ -82,6 +86,13 @@ class Predict:
         self.image_size = image_size
         self.verbose = verbose
         self.labels = labels
+        self.show_grad_cam = show_grad_cam
+
+        # Get all conv layers from the given model and get the last layer to visualize in GradCAM
+        if show_grad_cam:
+            layers = pt_visualize.get_all_conv_layers(self.model, grad_cam=True, feature_map=False)
+            grad_layer = layers[-1]
+            self.cam = GradCAM(model=self.model, target_layers=[grad_layer], use_cuda=True)
 
         if self.verbose:
             print("Initialised Predict class with model_save_path: {}".format(self.model_save_path))
@@ -171,11 +182,35 @@ class Predict:
             output_dict[images[i]] = output_label
 
             if self.verbose:
-                img_transp = preprocessed_images[i].transpose(1, 2, 0)
+                preprocessed_img_transp = preprocessed_images[i].transpose(1, 2, 0)
+                preprocessed_img = preprocessed_images[i]
 
-                plt.imshow(img_transp)
-                plt.title("Prediction: " + output_label)
-                plt.show()
+                if self.show_grad_cam:
+                    image_tensor = torch.tensor(preprocessed_img, dtype=torch.float32, device=self.device)
+
+                    # add an extra dimension to the image
+                    img = image_tensor.unsqueeze(0).to(self.device)
+                    grad_image = self.cam(input_tensor=img, targets=None)
+                    grad_image = np.transpose(grad_image, (1, 2, 0))
+                    grad_image = np.squeeze(grad_image)
+                    grad_image = np.array(grad_image * 255., dtype=np.uint8)
+
+                    image_uint8 = np.array(preprocessed_img_transp * 255., dtype=np.uint8)
+                    overlap_image = pt_visualize.overlay_gradcam_on_image(img=image_uint8, grad_cam_pil=grad_image, alpha=0.41, square_size=image_uint8.shape[0])
+
+                    # show the gradcam image and the original image side by side
+                    plt.figure(figsize=(10, 5))
+                    plt.subplot(1, 2, 1)
+                    plt.imshow(preprocessed_img_transp)
+                    plt.title("Prediction: " + output_label)
+                    plt.subplot(1, 2, 2)
+                    plt.imshow(overlap_image)
+                    plt.title("GradCAM")
+                    plt.show()
+                else:
+                    plt.imshow(preprocessed_img_transp)
+                    plt.title("Prediction: " + output_label)
+                    plt.show()
 
         return output_dict
 
