@@ -19,6 +19,7 @@ DATA_FOLDERS = {
     'org_data': _DATA_FOLDER + 'org_data' + os.sep,  # original dataset folder
     'training_data': _DATA_FOLDER + 'training_data' + os.sep,  # training dataset folder
 }
+OUTPUT_FOLDER = MAIN_PATH + 'output' + os.sep  # output folder
 
 APTOS2019 = "aptos2019-blindness-detection"
 IDRID = "IDRiD"

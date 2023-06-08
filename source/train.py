@@ -50,6 +50,7 @@ EARLY_STOPPING_MONITOR = cf.EARLY_STOPPING_MONITOR
 EARLY_STOPPING_MONITOR_MODE = cf.EARLY_STOPPING_MONITOR_MODE
 TRAIN_TUNE_TARGET = cf.TRAIN_TUNE_TARGET
 TRAIN_TUNE_MODE = cf.TRAIN_TUNE_MODE
+OUTPUT_FOLDER = cf.OUTPUT_FOLDER
 
 FULL_LABELS = cf.FULL_LABELS
 #############################################################################
@@ -413,6 +414,7 @@ def visualise_generator(
         get_confusion_matrix=True,
         grad_cam=True,
         visualise_full_batch=True,
+        output_dir=OUTPUT_FOLDER,
 ):
     if type(data_loader) == str:
         if data_loader == 'train':
@@ -464,8 +466,9 @@ def visualise_generator(
     cnt = 0
     if visualise_full_batch:
         num_images = 999999
+        utils.clear_folder(output_dir)
 
-    for batch in data_loader:
+    for i, batch in enumerate(data_loader):
         if visualise_full_batch:
             plt.close('all')
             plt.figure(figsize=(25, 25))
@@ -546,5 +549,6 @@ def visualise_generator(
                 return
 
         if visualise_full_batch:
+            plt.savefig(output_dir + os.sep + f"full_batch_viz_{i + 1}.png")
             plt.show()
             plt.close('all')
