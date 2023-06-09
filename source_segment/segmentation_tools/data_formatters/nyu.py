@@ -1,4 +1,4 @@
-import source.config as cf
+import source_segment.config as cf
 import h5py
 import os
 import numpy as np
@@ -7,9 +7,9 @@ import cv2
 from PIL import Image
 import pickle
 
-import source.segmentation_tools.segmentation_config as seg_cf
-import source.utils as utils
-import source.segmentation_tools.utils as seg_utils
+import source_segment.segmentation_tools.segmentation_config as seg_cf
+import source_segment.utils as utils
+import source_segment.segmentation_tools.utils as seg_utils
 
 
 def get_all_images(images_folder, mask_number=None, file_extension=".ppm"):

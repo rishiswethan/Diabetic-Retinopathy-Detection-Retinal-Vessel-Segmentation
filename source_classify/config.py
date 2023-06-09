@@ -13,7 +13,7 @@ DEVICE = 'cuda' if cuda.is_available() else 'cpu'
 # Folders
 
 INPUT_FOLDER = MAIN_PATH + 'input' + os.sep  # inputs parent folder
-_DATA_FOLDER = MAIN_PATH + 'data' + os.sep  # data folder
+_DATA_FOLDER = MAIN_PATH + 'data_classify' + os.sep  # data folder
 MODELS_FOLDER = MAIN_PATH + 'trained_models' + os.sep  # models folder
 DATA_FOLDERS = {
     'org_data': _DATA_FOLDER + 'org_data' + os.sep,  # original dataset folder

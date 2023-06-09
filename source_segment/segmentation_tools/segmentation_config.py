@@ -40,30 +40,23 @@ EARLY_STOPPING_PATIENCE = 20
 # classes
 ######################################################################################################################################################
 # Class names
-FLOOR = 'floor'  # Floor mask when using pixel level masks
-WALL = 'wall'  # Wall mask when using pixel level masks
-CEILING = 'ceiling'  # Ceiling mask when using pixel level masks
+VESSEL = 'vessel'  # Vessel mask
 PIXEL_LEVEL = 'pixel_level'  # Pixel level mask when using border masks
 BORDER = 'border'  # Border mask when using border masks
 UNLABELED = 'unlabeled'
 
 # Mask numbers for each class
 UNLABELED_MASK = {"name": UNLABELED, "mask_number": 0}
-FLOOR_MASK = {"name": FLOOR, "mask_number": 1}
-WALL_MASK = {"name": WALL, "mask_number": 2}
-# CEILING_MASK = {"name": CEILING, "mask_number": 3}
-
-ALL_ORIGINAL_MASKS = [UNLABELED_MASK, FLOOR_MASK, WALL_MASK]  # All original masks that are available and in use
+VESSEL_MASK = {"name": VESSEL, "mask_number": 1}
+ALL_ORIGINAL_MASKS = [UNLABELED_MASK, VESSEL_MASK]  # All original masks that are available and in use
 
 MASKS = {
     UNLABELED: 0,
-    FLOOR: 1,
-    WALL: 2,
+    VESSEL: 1,
 }
 MASKS_INV = {
     0: UNLABELED,
-    1: FLOOR,
-    2: WALL,
+    1: VESSEL
 }
 BORDER_THICKNESS = 25  # thickness of the border mask
 MIN_PIXELS_MASK_ALL_CLASSES_PER = 0.01  # minimum percentage of pixels that must be present in a mask for it to be sent to train or test data
@@ -93,7 +86,7 @@ TRAIN_TEST_MASKS_FOLDER = "masks" + os.sep
 # Masks to use
 CHOSEN_MASKS = [
     UNLABELED,
-    FLOOR,
+    VESSEL,
     # WALL,
 ]
 
@@ -109,7 +102,7 @@ CHOSEN_TRAINING_DATASETS = [
 
 # chosen mask type
 CHOSEN_MASK_TYPE = [PIXEL_LEVEL_MASK_TYPE, BORDER_MASK_TYPE][0]  # choose between PIXEL_LEVEL and BORDER_MASK
-TARGET_BORDER_CLASS = FLOOR_MASK  # Not used if CHOSEN_MASK_TYPE is PIXEL_LEVEL
+TARGET_BORDER_CLASS = VESSEL  # Not used if CHOSEN_MASK_TYPE is PIXEL_LEVEL
 
 # choose special training datasets. These datasets have augmented data, so only one image per folder is used. Values are functions that return the unique folder names
 SPECIAL_TRAINING_DATASETS = [

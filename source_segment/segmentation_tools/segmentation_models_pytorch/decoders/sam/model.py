@@ -6,11 +6,11 @@ from segment_anything.modeling import MaskDecoder, TwoWayTransformer, PromptEnco
 from torch.nn import functional as F
 from torch.utils import model_zoo
 
-from source.segmentation_tools.segmentation_models_pytorch.base import (
+from source_segment.segmentation_tools.segmentation_models_pytorch.base import (
     SegmentationModel,
     SegmentationHead,
 )
-from source.segmentation_tools.segmentation_models_pytorch.encoders import get_encoder, sam_vit_encoders, get_pretrained_settings
+from source_segment.segmentation_tools.segmentation_models_pytorch.encoders import get_encoder, sam_vit_encoders, get_pretrained_settings
 
 logger = logging.getLogger("sam")
 logger.setLevel(logging.WARNING)

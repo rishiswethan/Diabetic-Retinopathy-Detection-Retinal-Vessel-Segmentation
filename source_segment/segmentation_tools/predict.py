@@ -7,11 +7,11 @@ from PIL import Image
 import torch
 import matplotlib.pyplot as plt
 
-# import source.segmentation_tools.tasm as tasm
-import source.segmentation_tools.utils as seg_utils
-import source.segmentation_tools.segmentation_config as seg_cf
-import source.config as cf
-import source.segmentation_tools.data_handling as data_handling
+# import source_segment.segmentation_tools.tasm as tasm
+import source_segment.segmentation_tools.utils as seg_utils
+import source_segment.segmentation_tools.segmentation_config as seg_cf
+import source_segment.config as cf
+import source_segment.segmentation_tools.data_handling as data_handling
 
 
 BATCH_SIZE = seg_cf.BATCH_SIZE

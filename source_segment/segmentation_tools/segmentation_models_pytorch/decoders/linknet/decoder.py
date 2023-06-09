@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from source.segmentation_tools.segmentation_models_pytorch.base import modules
+from source_segment.segmentation_tools.segmentation_models_pytorch.base import modules
 
 
 class TransposeX2(nn.Sequential):

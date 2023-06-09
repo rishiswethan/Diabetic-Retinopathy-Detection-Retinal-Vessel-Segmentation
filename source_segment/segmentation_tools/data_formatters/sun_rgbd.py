@@ -5,10 +5,10 @@ import shutil
 import pickle
 from PIL import Image
 
-import source.config as cf
-import source.segmentation_tools.segmentation_config as seg_cf
-import source.segmentation_tools.utils as seg_utils
-import source.utils as utils
+import source_segment.config as cf
+import source_segment.segmentation_tools.segmentation_config as seg_cf
+import source_segment.segmentation_tools.utils as seg_utils
+import source_segment.utils as utils
 
 
 def load_mask_as_binary_array(mask_path, binary_one_replacement=1, binary_th=230):

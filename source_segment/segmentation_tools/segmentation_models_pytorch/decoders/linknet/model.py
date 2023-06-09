@@ -1,11 +1,11 @@
 from typing import Optional, Union
 
-from source.segmentation_tools.segmentation_models_pytorch.base import (
+from source_segment.segmentation_tools.segmentation_models_pytorch.base import (
     SegmentationHead,
     SegmentationModel,
     ClassificationHead,
 )
-from source.segmentation_tools.segmentation_models_pytorch.encoders import get_encoder
+from source_segment.segmentation_tools.segmentation_models_pytorch.encoders import get_encoder
 from .decoder import LinknetDecoder
 
 

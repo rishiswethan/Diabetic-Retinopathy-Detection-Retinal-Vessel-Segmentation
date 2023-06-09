@@ -2,13 +2,13 @@ import h5py
 import os
 from sklearn.utils import shuffle
 import shutil
-import source.config as cf
+import source_segment.config as cf
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 from PIL import Image
 
-import source.segmentation_tools.segmentation_config as seg_cf
+import source_segment.segmentation_tools.segmentation_config as seg_cf
 
 
 def save_h5(data, data_label, filename):
@@ -352,3 +352,32 @@ def display(display_list, title=None):
 
 def predict_np_image(image):
     pass
+
+
+def clear_folder(folder_path, create_if_not_exists=True):
+    """
+    Clear a folder without deleting the folder itself
+
+    :param folder_path: str, path to the folder
+    :return: None
+    """
+    # Check if the folder exists
+    if not os.path.exists(folder_path):
+        # Create the folder if it does not exist
+        if create_if_not_exists:
+            os.makedirs(folder_path)
+        else:
+            raise ValueError(f"Folder {folder_path} does not exist")
+
+    # Iterate over all files and directories in the folder
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+
+        # Use try/except to catch any errors while deleting
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)  # remove file
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)  # remove directory
+        except Exception as e:
+            warnings.warn(f"Failed to delete {file_path}. Reason: {e}")

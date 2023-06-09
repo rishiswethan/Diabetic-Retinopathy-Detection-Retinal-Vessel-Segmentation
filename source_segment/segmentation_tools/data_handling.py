@@ -11,12 +11,12 @@ import pickle
 from torch.utils.data import DataLoader
 import torch
 
-import source.config as cf
-import source.segmentation_tools.segmentation_config as seg_cf
-# import source.segmentation_tools_pytorch.tasm as tasm
-import source.segmentation_tools.utils as seg_utils
-import source.segmentation_tools.data_formatters.ScenenetRGBD as scenenet
-import source.utils as utils
+import source_segment.config as cf
+import source_segment.segmentation_tools.segmentation_config as seg_cf
+# import source_segment.segmentation_tools_pytorch.tasm as tasm
+import source_segment.segmentation_tools.utils as seg_utils
+import source_segment.segmentation_tools.data_formatters.ScenenetRGBD as scenenet
+import source_segment.utils as utils
 
 # train_dataset_length = None
 # valid_dataset_length = None

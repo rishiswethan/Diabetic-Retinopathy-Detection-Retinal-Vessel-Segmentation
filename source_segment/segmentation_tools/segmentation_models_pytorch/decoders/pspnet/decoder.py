@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from source.segmentation_tools.segmentation_models_pytorch.base import modules
+from source_segment.segmentation_tools.segmentation_models_pytorch.base import modules
 
 
 class PSPBlock(nn.Module):

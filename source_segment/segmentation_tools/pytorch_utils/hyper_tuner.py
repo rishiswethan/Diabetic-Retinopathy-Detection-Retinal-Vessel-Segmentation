@@ -1,6 +1,6 @@
 import random
 
-import source.audio_analysis_utils.utils as utils
+import source_segment.audio_analysis_utils.utils as utils
 import csv
 import os
 from operator import itemgetter

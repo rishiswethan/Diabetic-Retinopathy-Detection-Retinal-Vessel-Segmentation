@@ -1,8 +1,8 @@
-import source.segmentation_tools.data_formatters.sun_rgbd as sun_rgbd
-import source.segmentation_tools.segmentation_config as seg_cf
-import source.config as cf
-import source.segmentation_tools.utils as seg_utils
-import source.utils as utils
+import source_segment.segmentation_tools.data_formatters.sun_rgbd as sun_rgbd
+import source_segment.segmentation_tools.segmentation_config as seg_cf
+import source_segment.config as cf
+import source_segment.segmentation_tools.utils as seg_utils
+import source_segment.utils as utils
 
 import os
 import pickle

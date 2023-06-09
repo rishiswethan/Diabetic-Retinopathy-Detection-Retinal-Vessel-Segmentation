@@ -1,7 +1,7 @@
 from typing import Optional, Union, List
 
-from source.segmentation_tools.segmentation_models_pytorch.encoders import get_encoder
-from source.segmentation_tools.segmentation_models_pytorch.base import (
+from source_segment.segmentation_tools.segmentation_models_pytorch.encoders import get_encoder
+from source_segment.segmentation_tools.segmentation_models_pytorch.base import (
     SegmentationModel,
     SegmentationHead,
     ClassificationHead,

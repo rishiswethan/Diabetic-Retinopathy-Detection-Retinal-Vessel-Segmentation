@@ -1,4 +1,4 @@
-import source.config as cf
+import source_segment.config as cf
 
 import os
 

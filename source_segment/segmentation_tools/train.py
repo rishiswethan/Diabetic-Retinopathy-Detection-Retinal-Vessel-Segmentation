@@ -4,18 +4,18 @@ import torch
 from torch.utils.data import DataLoader
 
 
-import source.segmentation_tools.segmentation_models_pytorch as smp
-import source.segmentation_tools.segmentation_models_pytorch.utils as smp_utils
-import source.segmentation_tools.segmentation_models_pytorch.losses as smp_losses
+import source_segment.segmentation_tools.segmentation_models_pytorch as smp
+import source_segment.segmentation_tools.segmentation_models_pytorch.utils as smp_utils
+import source_segment.segmentation_tools.segmentation_models_pytorch.losses as smp_losses
 
-import source.config as cf
-# import source.segmentation_tools_pytorch.tasm as tasm
-import source.segmentation_tools.utils as seg_utils
-import source.segmentation_tools.data_handling as data_handling
-import source.segmentation_tools.segmentation_config as seg_cf
+import source_segment.config as cf
+# import source_segment.segmentation_tools_pytorch.tasm as tasm
+import source_segment.segmentation_tools.utils as seg_utils
+import source_segment.segmentation_tools.data_handling as data_handling
+import source_segment.segmentation_tools.segmentation_config as seg_cf
 
-import source.segmentation_tools.pytorch_utils.training_utils as pt_train
-import source.segmentation_tools.pytorch_utils.callbacks as pt_callbacks
+import source_segment.segmentation_tools.pytorch_utils.training_utils as pt_train
+import source_segment.segmentation_tools.pytorch_utils.callbacks as pt_callbacks
 
 # find the device to be used for training from tensorflow and set memory growth to true
 has_gpu = torch.cuda.is_available()
