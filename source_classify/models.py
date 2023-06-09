@@ -3,7 +3,7 @@ from torchvision import models
 import pretrainedmodels
 
 import pytorch_utils.training_utils as pt_train
-import source.config as cf
+import source_classify.config as cf
 
 
 TRAIN_ACC_METRIC = cf.TRAIN_ACC_METRIC
