@@ -341,7 +341,7 @@ def display(display_list, title=None):
     if title is None:
         title = ['Input Image', 'True Mask', 'Predicted Mask', 'Superimposed Mask']
 
-    plt.figure(figsize=(5 * len(title), 5))
+    plt.figure(figsize=(10 * len(title), 10))
 
     for i in range(len(display_list)):
         plt.subplot(1, len(display_list), i + 1)

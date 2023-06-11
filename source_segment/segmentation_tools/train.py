@@ -188,47 +188,19 @@ def _train(
 
     model = get_model_def()
     if continue_training or load_weights_for_fine_tune:
-        model = model.load_state_dict(torch.load(train_model_save_path, map_location=device))
-    model = model.to(device)
+        model.load_state_dict(torch.load(train_model_save_path, map_location=device))
+    model.to(device)
 
     # visualize the model
     model.eval()
-    cnt = 0
-    for i, data_point in enumerate(chosen_train_set):
-        for j in range(len(data_point[0])):
-            print("i", i, data_point[0].shape, data_point[1].shape)
-            image_, mask = data_point[0][j], data_point[1][j]
-            print("image", image_.shape)
-            print("mask", mask.shape)
+    visualise_generator(
+        data_loader=chosen_train_set,
+        model=model,
+        device=device,
+        num_images=3,
+    )
 
-            image = np.array(image_)
-            mask = np.array(mask)
-
-            # unsqueeze the single image and mask with (3, 256, 256) to (256, 256, 3)
-            image = np.transpose(image, (1, 2, 0))
-            mask = np.transpose(mask, (1, 2, 0))
-
-            # convert the one hot encoded mask to a single channel mask
-            mask = np.argmax(mask, axis=2)
-
-            print("image", image.shape, np.unique(image))
-            print(mask.shape)
-
-            output = predict_image(image, model)
-            output = np.transpose(output[0], (1, 2, 0))
-            print("output unique: ", np.unique(output))
-            output = np.argmax(output, axis=2)
-            print(output.shape)
-
-            seg_utils.visualize(image=image, mask=mask, output=output)
-
-            cnt += 1
-            if cnt >= 3:
-                break
-
-        if cnt >= 3:
-            break
-
+    model.train()
     loss = smp.utils.losses.DiceLoss()
 
     metrics = [
@@ -296,7 +268,7 @@ def _train(
 
 def visualise_generator(
         data_loader,
-        model_save_path,
+        model_save_path=cf.MODEL_SAVE_PATH_BEST_TRAIN_LOSS,
         model=None,
         num_images=None,
         run_evaluation=False,
@@ -353,7 +325,6 @@ def visualise_generator(
             img_np = np.transpose(img_np, (1, 2, 0))
             img_np = img_np * 255.0
             img_np = img_np.astype(np.uint8)
-            print("Image: ", img_np.shape, np.unique(img_np))
 
             seg_utils.display([img_np, label_mask, pred_mask],
                               ["Image", "Label", "Prediction"],)
