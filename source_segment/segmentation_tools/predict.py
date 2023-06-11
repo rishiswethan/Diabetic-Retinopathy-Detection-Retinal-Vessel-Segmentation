@@ -106,9 +106,9 @@ class Predict:
                 >>> Predict().predict(cf.INPUT_FOLDER, return_actual_preds=False)  # contains 3 images
 
                 Output:
-                    {'<cf.INPUT_FOLDER>/image_1.jpg': 'green',
-                     '<cf.INPUT_FOLDER>/image_2.jpg': 'maroon',
-                     '<cf.INPUT_FOLDER>/image_3.jpg': 'rust'}
+                    {'<cf.INPUT_FOLDER>/image_1.jpg': <mask numpy array>,
+                     '<cf.INPUT_FOLDER>/image_2.jpg': <mask numpy array>,
+                     '<cf.INPUT_FOLDER>/image_3.jpg': <mask numpy array>}
 
         """
 

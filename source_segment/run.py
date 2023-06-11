@@ -3,18 +3,30 @@ import os
 import source_segment.config as config
 import source_segment.segmentation_tools.train as train
 import source_segment.segmentation_tools.predict as predict
+import source_segment.segmentation_tools.data_handling as data_handling
+import source_segment.segmentation_tools.segmentation_config as seg_config
+import source_segment.config as cf
 
 
 if __name__ == '__main__':
     print("Initializing segmentation toolkit...\n\n")
 
     ch = input(
-        f"1) Detect all images in '{config.INPUT_FOLDER.split(os.sep)[-2]}' folder\n"
-        "2) Training options\n"
+        f"1) Visualise model on val set\n"
+        f"2) Predict on custom image(s)\n"
+        "3) Training options\n"
         )
     if ch == '1':
-        predict.run_images()
+        data_handling.init()
+        train.visualise_generator(data_loader='val')
+
     elif ch == '2':
+        path = input("Enter the full path to a single image, or a folder containing images: ")
+
+        pred_cls = predict.Predict(verbose=True)
+        pred_cls.predict(images=path)
+
+    elif ch == '3':
         ch = input("1) New model using random initialisation\n"
                    "2) Continue training from last saved checkpoint\n"
                    "3) Fine tune model from pre-trained weights\n")
