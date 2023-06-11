@@ -6,7 +6,8 @@ from torch.utils.data import DataLoader
 
 import source_segment.segmentation_tools.segmentation_models_pytorch as smp
 import source_segment.segmentation_tools.segmentation_models_pytorch.utils as smp_utils
-import source_segment.segmentation_tools.segmentation_models_pytorch.losses as smp_losses
+import source_segment.segmentation_tools.segmentation_models_pytorch.decoders.custom.SA_Unet as SA_Unet
+import source_segment.segmentation_tools.segmentation_models_pytorch.decoders.custom.iternet_model as iternet_model
 
 import source_segment.config as cf
 # import source_segment.segmentation_tools_pytorch.tasm as tasm
@@ -36,6 +37,7 @@ BACKBONE_NAME = seg_cf.BACKBONE_NAME
 WEIGHTS = seg_cf.WEIGHTS
 WWO_AUG = seg_cf.WWO_AUG  # train data with and without augmentation
 PROB_APPLY_AUGMENTATION = seg_cf.PROB_APPLY_AUGMENTATION
+DEVICE = seg_cf.DEVICE
 
 
 def get_data_generators(batch_size, height, width, classes=MODEL_CLASSES, train_shuffle=True, val_shuffle=True, seed=None):
@@ -138,6 +140,17 @@ def predict_image(image_np, model):
     return output.cpu()
 
 
+def get_model_def():
+    model = smp.DeepLabV3Plus(
+            encoder_name=seg_cf.BACKBONE_NAME,
+            encoder_weights=seg_cf.WEIGHTS,
+            classes=len(seg_cf.CHOSEN_MASKS),
+            activation=seg_cf.ACTIVATION,
+        )
+
+    return model
+
+
 def _train(
         continue_training=False,
         load_weights_for_fine_tune=False,
@@ -173,18 +186,14 @@ def _train(
 
     print("class_weights", class_weights)
 
+    model = get_model_def()
     if continue_training or load_weights_for_fine_tune:
-        model = torch.load(train_model_save_path)
-    else:
-        model = smp.DeepLabV3Plus(
-            encoder_name=seg_cf.BACKBONE_NAME,
-            encoder_weights=seg_cf.WEIGHTS,
-            classes=len(seg_cf.CHOSEN_MASKS),
-            activation=seg_cf.ACTIVATION,
-        )
+        model = model.load_state_dict(torch.load(train_model_save_path, map_location=device))
+    model = model.to(device)
 
     # visualize the model
     model.eval()
+    cnt = 0
     for i, data_point in enumerate(chosen_train_set):
         for j in range(len(data_point[0])):
             print("i", i, data_point[0].shape, data_point[1].shape)
@@ -213,13 +222,20 @@ def _train(
 
             seg_utils.visualize(image=image, mask=mask, output=output)
 
+            cnt += 1
+            if cnt >= 3:
+                break
+
+        if cnt >= 3:
             break
-        break
 
     loss = smp.utils.losses.DiceLoss()
 
     metrics = [
         smp.utils.metrics.IoU(threshold=0.5, ignore_channels=[0]),
+        # smp.utils.metrics.Fscore(threshold=0.5, ignore_channels=[0]),
+        smp.utils.metrics.Accuracy(threshold=0.5, ignore_channels=[0]),
+        smp.utils.metrics.DiceScore(threshold=0.5, ignore_channels=[0]),
     ]
 
     if continue_training:
@@ -278,21 +294,73 @@ def _train(
             break
 
 
-def evaluate_model(model, eval_set, metrics, class_weights=None):
-    for i in eval_set:
-        sample_image, sample_mask = i[0][0], i[1][0]
-        print(len(i))
-        print(i[0].shape)
-        print(i[1].shape)
+def visualise_generator(
+        data_loader,
+        model_save_path,
+        model=None,
+        num_images=None,
+        run_evaluation=False,
+        val_batch_size=1,
+        num_workers=0,
+        device=DEVICE,
+):
+    if type(data_loader) == str:
+        if data_loader == 'train':
+            data_generator = get_data_generators(BATCH_SIZE, HEIGHT, WIDTH, classes=MODEL_CLASSES, train_shuffle=True, val_shuffle=True, seed=None)[0]
+        elif data_loader == 'val':
+            data_generator = get_data_generators(BATCH_SIZE, HEIGHT, WIDTH, classes=MODEL_CLASSES, train_shuffle=True, val_shuffle=True, seed=None)[1]
+    elif type(data_loader) != torch.utils.data.DataLoader:
+        raise TypeError("data_loader must be of type str or torch.utils.data.DataLoader, or \"train\" or \"val\"")
 
-        model.evaluate(x=i[0], y=i[1], verbose=1, steps=len(i))
+    if type(data_loader) != torch.utils.data.DataLoader:
+        data_loader = torch.utils.data.DataLoader(data_generator, batch_size=val_batch_size, shuffle=False, num_workers=num_workers)
 
-        data_handling.show_sample_predictions(
-            sample_image=sample_image,
-            sample_mask=sample_mask,
-            model=model,
-            class_weights=class_weights,
-        )
+    if model is None:
+        model = get_model_def()
+        model.load_state_dict(torch.load(model_save_path, map_location=device))
+
+    model.eval()
+    model.to(device)
+
+    # evaluate model on data_loader
+    if run_evaluation:
+        print("\nEvaluating model on data_loader: ")
+        results = pt_train._evaluate(model, data_loader)
+        print("Results: ", results)
+
+    cnt = 0
+    for batch in data_loader:
+        for (image, label) in zip(batch[0], batch[1]):
+
+            print("\nImage: ", image.shape)
+            print("Label: ", label.shape)
+
+            # get prediction
+            image = image.unsqueeze(0).to(device)
+            pred_mask = model(image)
+
+            pred_mask = pred_mask.cpu().detach().numpy()
+            pred_mask = np.squeeze(pred_mask, axis=0)
+            pred_mask = np.transpose(pred_mask, (1, 2, 0))
+            pred_mask = np.argmax(pred_mask, axis=-1)
+
+            label_mask = label.cpu().detach().numpy()
+            label_mask = np.transpose(label_mask, (1, 2, 0))
+            label_mask = np.argmax(label_mask, axis=-1)
+
+            img_np = image.cpu().numpy()
+            img_np = np.squeeze(img_np, axis=0)
+            img_np = np.transpose(img_np, (1, 2, 0))
+            img_np = img_np * 255.0
+            img_np = img_np.astype(np.uint8)
+            print("Image: ", img_np.shape, np.unique(img_np))
+
+            seg_utils.display([img_np, label_mask, pred_mask],
+                              ["Image", "Label", "Prediction"],)
+
+            cnt += 1
+            if num_images and cnt >= num_images:
+                return
 
 
 # ReduceLROnPlateau saves the last used lr and model uses it by default. This lets us start from the initial lr
@@ -319,41 +387,11 @@ if __name__ == "__main__":
     print("Num CPUs Available: ", num_cpu)
 
     data_handling.init()
-    train(continue_training=True, load_weights_for_fine_tune=False)
+    # train(continue_training=True, load_weights_for_fine_tune=False)
 
-    # Test the model on the test set and show some predictions. This is used for debugging and testing purposes and will be removed in the final version
-    # ValidationSet = data_handling.DataGenerator(
-    #     'test',
-    #     1,
-    #     HEIGHT,
-    #     WIDTH,
-    #     classes=MODEL_CLASSES,
-    #     augmentation=data_handling.get_validation_augmentation(height=HEIGHT, width=WIDTH),
-    #     shuffle=True,
-    #     verbose=True  # Make verbose true to see images and masks
-    # )
-    #
-    # for i in ValidationSet:
-    #     print(len(i))
-    #     print(i[0].shape)
-    #     print(i[1].shape)
-
-    # base_model, layers, layer_names = tasm.tf_backbones.create_base_model(name=BACKBONE_NAME, weights=WEIGHTS, height=HEIGHT, width=WIDTH, include_top=False, pooling=None)
-    # class_weights = seg_utils.get_balancing_class_weights(MODEL_CLASSES, data_handling.CLASSES_PIXEL_COUNT_DICT)
-    # # class_weights[2] = 0.00001
-    # print(class_weights)
-    # model = tasm.DeepLabV3plus.DeepLabV3plus(n_classes=N_CLASSES, base_model=base_model, output_layers=layers, backbone_trainable=True)
-    #
-    # opt = tf.keras.optimizers.Adam(learning_rate=seg_cf.INITIAL_LR)
-    # metrics = [tasm.metrics.IOUScore(threshold=0.5, class_weights=class_weights), "accuracy"]
-    # categorical_focal_dice_loss = tasm.losses.CategoricalFocalLoss(alpha=0.25, gamma=2.0) + tasm.losses.DiceLoss()
-    # model.compile(
-    #     # optimizer=opt,
-    #     loss=categorical_focal_dice_loss,
-    #     metrics=metrics,
-    #     run_eagerly=True
-    # )
-    # model.run_eagerly = True
-    # model.load_weights(cf.MODEL_SAVE_PATH)
-    # # model.evaluate(ValidationSet, verbose=1, steps=len(ValidationSet), sample_weight=class_weights)
-    # evaluate_model(model, ValidationSet, metrics=metrics, class_weights=class_weights)
+    visualise_generator(
+        data_loader='val',
+        model_save_path=cf.MODEL_SAVE_PATH_BEST_VAL_LOSS,
+        model=None,
+        device="cpu"
+    )

@@ -13,15 +13,14 @@ import torch
 
 import source_segment.config as cf
 import source_segment.segmentation_tools.segmentation_config as seg_cf
-# import source_segment.segmentation_tools_pytorch.tasm as tasm
 import source_segment.segmentation_tools.utils as seg_utils
 import source_segment.segmentation_tools.data_formatters.ScenenetRGBD as scenenet
-import source_segment.utils as utils
 
-# train_dataset_length = None
-# valid_dataset_length = None
+
 _dataset_path_data = {}
 CLASSES_PIXEL_COUNT_DICT = {}
+SQUARE_SIZE = seg_cf.HEIGHT
+DEVICE = seg_cf.DEVICE
 
 
 # initialize data
@@ -118,8 +117,8 @@ def crop_and_stretch(image,
 
     def resize(image, mask, _height, _width):
         """Resize image and mask to original height and width. This will create a stretched image."""
-        image = cv2.resize(image, (_height, _width), interpolation=cv2.INTER_NEAREST)
-        mask = cv2.resize(mask, (_height, _width), interpolation=cv2.INTER_NEAREST)
+        image = cv2.resize(image, (_height, _width), interpolation=cv2.INTER_NEAREST_EXACT)
+        mask = cv2.resize(mask, (_height, _width), interpolation=cv2.INTER_NEAREST_EXACT)
         return image, mask
 
     org_height, org_width = image.shape[:2]
@@ -198,14 +197,6 @@ def get_training_augmentation(height, width, prob_each_aug=0.9):
             # ),
         ]
         return albu.Compose(train_transform)
-
-    # def _custom_augmentations(image, mask):
-    #     augs = _get_training_augmentation(height, width)(image=image, mask=mask)
-    #     image, mask = augs["image"], augs["mask"]
-    #
-    #     image, mask = crop_and_stretch(image, mask, max_crop_per=0.1, prob_apply_aug=0.5, verbose=False)
-    #
-    #     return {"image": image, "mask": mask}
 
     return _get_training_augmentation(height, width)
 
@@ -319,6 +310,7 @@ def _get_file_paths(train_or_test, one_per_folder_datasets=seg_cf.SPECIAL_TRAINI
 
 
 def preprocess_image_mask(image, mask=None):
+    # image = _scale_preprocess(image)
     image = image.astype(np.float32)
     image /= 255.0
     sample = {
@@ -327,6 +319,117 @@ def preprocess_image_mask(image, mask=None):
     }
 
     return sample
+
+
+def _pad_to_square(img, pad_attributes):
+    shape = img.shape
+    height, width = shape[:2]
+
+    if pad_attributes is None:
+        if height > width:
+            pad = (height - width) // 2
+            pad_attributes = (0, 0, pad, pad, random.randint(0,1000))
+        elif width > height:
+            pad = (width - height) // 2
+            pad_attributes = (pad, pad, 0, 0, random.randint(0,1000))
+        else:
+            pad_attributes = (0, 0, 0, 0, random.randint(0,1000))
+
+    border_color = (0, 0, 0)
+    img = cv2.copyMakeBorder(img, pad_attributes[0], pad_attributes[1], pad_attributes[2], pad_attributes[3], cv2.BORDER_CONSTANT, value=border_color)
+
+    return img, pad_attributes
+
+
+def _remove_black_borders(img, mask=None, black_th=5):
+    img_t = img.copy()
+    img_t = cv2.cvtColor(img_t, cv2.COLOR_RGB2GRAY)
+
+    # x axis
+    centre_y = img_t.shape[1] // 2
+    black_list = img_t[:, centre_y]
+    black_list = np.where(black_list >= black_th)[0]
+    black_list_x = black_list.copy()
+
+    if len(black_list) > 1:
+        first_non_black = black_list[0]
+        reverse_first_non_black = black_list[-1] + 1
+
+        img = img[first_non_black:, :, :]
+        img = img[:reverse_first_non_black - first_non_black, :, :]
+
+    # y axis
+    centre_x = img_t.shape[0] // 2
+    black_list = img_t[centre_x, :]
+    black_list = np.where(black_list >= black_th)[0]
+    black_list_y = black_list.copy()
+
+    if len(black_list) > 1:
+        first_non_black_y = black_list[0]
+        reverse_first_non_black_y = black_list[-1] + 1
+
+        img = img[:, first_non_black_y:, :]
+        img = img[:, :reverse_first_non_black_y - first_non_black_y, :]
+
+    # crop the mask with the same values
+    if mask is not None:
+        if len(black_list_x) > 1:
+            mask = mask[first_non_black:, :]
+            mask = mask[:reverse_first_non_black - first_non_black, :]
+
+        if len(black_list_y) > 1:
+            mask = mask[:, first_non_black_y:]
+            mask = mask[:, :reverse_first_non_black_y - first_non_black_y]
+
+    return img, mask
+
+
+def read_fix_img_mask(img, mask=None, desired_size=SQUARE_SIZE):
+    mask = cv2.imread(mask, 0)
+    image = cv2.imread(img)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # remove black borders.
+    # Doing this and resizing to a set size will help scale the eye to a similar size for all images
+    image, mask = _remove_black_borders(image, mask)
+
+    # pad to square
+    image, pad_attributes = _pad_to_square(image, None)
+    if mask is not None:
+        mask = _pad_to_square(mask, pad_attributes)[0]
+
+        mask = cv2.resize(mask, (desired_size, desired_size), interpolation=cv2.INTER_NEAREST_EXACT)
+
+    image = cv2.resize(image, (desired_size, desired_size), interpolation=cv2.INTER_NEAREST_EXACT)
+
+    return image, mask
+
+
+def _scale_preprocess(image, scale=SQUARE_SIZE):
+    def scaleRadius(img, scale):
+        x = img[img.shape[0] // 2, :, :].sum(1)
+        r = (x > x.mean() / 10).sum() / 2
+        s = scale * 1.0 / (r + 1e-8)
+
+        return cv2.resize(img, (0, 0), fx=s, fy=s)
+
+    a = image
+
+    # scale img to a given radius
+    # a = scaleRadius(a, scale)
+
+    # subtract local mean color
+    a = cv2.addWeighted(a, 4, cv2.GaussianBlur(a, (0, 0), scale / 30), -4, 128)
+
+    # remove outer 10%
+    b = np.zeros(a.shape)
+
+    cv2.circle(b, (a.shape[1] // 2, a.shape[0] // 2), int(scale * 0.9), (1, 1, 1), -1, 8, 0)
+
+    a = a * b + 128 * (1 - b)
+    a = cv2.resize(a, (scale, scale), interpolation=cv2.INTER_NEAREST_EXACT)
+
+    return a
 
 
 def process_image_label(images_paths,
@@ -338,10 +441,12 @@ def process_image_label(images_paths,
                         preprocessing=preprocess_image_mask,
                         special_dataset=False,
                         border_mode_flag=seg_cf.CHOSEN_MASK_TYPE,
+                        image_reader_func=read_fix_img_mask,
                         verbose=0):
-    # resize the mask to the size of the image
-    mask = cv2.imread(masks_paths, 0)
-    mask = cv2.resize(mask, (seg_cf.HEIGHT, seg_cf.WIDTH), interpolation=cv2.INTER_NEAREST)
+
+    # Read the image here. This only fixes the image size and removes black borders. No other preprocessing is done
+    image, mask = image_reader_func(images_paths, masks_paths)
+
     if special_dataset and border_mode_flag == seg_cf.BORDER_MASK_TYPE:
         # special dataset doesn't have the border detected. We should do it here
         mask = seg_utils.make_border_of_mask(masks_paths)
@@ -352,11 +457,6 @@ def process_image_label(images_paths,
         class_values = [0] + class_values
     class_values = sorted(class_values)
     missing_class_values = [v for v in all_classes.values() if v not in class_values]
-
-    # read data
-    image = cv2.imread(images_paths)
-    image = cv2.resize(image, (seg_cf.HEIGHT, seg_cf.WIDTH), interpolation=cv2.INTER_NEAREST)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     for class_val in missing_class_values:
         mask[mask == class_val] = 0
@@ -649,28 +749,6 @@ class DataGenerator(torch.utils.data.Dataset):
         return image, label
 
 
-class SimpleGenerator:
-    def __init__(self, folder_path, verbose=False):
-        self.folder_path = folder_path
-        self.image_path_generator = SimpleImagePathGenerator(folder_path, verbose=verbose)
-
-    def __len__(self):
-        return len(os.listdir(self.folder_path))
-
-    def __getitem__(self, item):
-        while True:
-            image_path, flag = next(self.image_path_generator)
-            if flag:
-                image_array = cv2.imread(image_path)
-                image_array = image_array[..., :3]
-                image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
-                # image_array = cv2.resize(image_array, (seg_cf.HEIGHT, seg_cf.WIDTH), interpolation=cv2.INTER_NEAREST)
-                image_array = preprocess_image_mask(image_array)["image"]
-
-                return image_array, image_path
-            else:
-                return None
-
 class SimpleImagePathGenerator:
     def __init__(self, folder_path, verbose=False):
         self.folder_path = folder_path
@@ -697,107 +775,6 @@ class SimpleImagePathGenerator:
             return "end", False
         else:
             return return_path, True
-
-
-def create_mask(pred_mask):
-    pred_mask = tf.argmax(pred_mask, axis=-1)
-    pred_mask = pred_mask[..., tf.newaxis]
-    return pred_mask[0]
-
-
-def _show_sample_predictions_border(
-        sample_image,
-        sample_mask,
-        model,
-        display_image=True,
-        class_weights=None,
-        detection_threshold=seg_cf.PREDICTION_TH,
-):
-    output_model = model.predict((sample_image[tf.newaxis, ...]))
-    print("output_model shape", output_model.shape, np.sort(np.unique(output_model)))
-
-    scce = tf.keras.losses.CategoricalCrossentropy()
-    print("SparseCategoricalCrossentroy: " + str(scce(sample_mask, output_model[0]).numpy()))
-    print("Iou-Score: " + str(tasm.iou_score(sample_mask, output_model[0]).numpy()))
-    print("categorical Focal Dice Loss: " + str(tasm.categorical_focal_dice_loss(sample_mask, output_model[0]).numpy()))
-    if display_image:
-        sample_mask_disp = output_model[0]
-        # sample_mask_disp = np.array(sample_mask)
-
-        # extract the mask of interest and superimpose it on the image
-        # sample_mask = np.argmax(sample_mask, axis=-1)
-        # sample_mask = np.expand_dims(sample_mask, axis=-1)
-        sample_mask_1 = sample_mask[..., 1]
-        sample_mask_1 = np.expand_dims(sample_mask_1, axis=-1)
-        # sample_mask_2 = sample_mask[..., 2]
-        # sample_mask_2 = np.expand_dims(sample_mask_2, axis=-1)
-
-        display_list = [sample_image, sample_mask_1, create_mask(output_model)]
-
-        print("sample_mask shape", sample_mask_disp.shape, np.sort(np.unique(sample_mask_disp)))
-
-        # argmax returns the INDEX of the max value in the array channels
-        arg_max_arrays = np.argmax(sample_mask_disp[..., 0:3], axis=-1)
-
-        super_imposed = sample_image * 255.
-        for i in range(1, sample_mask_disp.shape[-1]):
-            layer_of_interest = sample_mask_disp[..., i].copy()
-            # layer_of_interest[layer_of_interest > 0.5] = 1
-
-            disabled_pixels = layer_of_interest <= detection_threshold
-            layer_of_interest[arg_max_arrays != i] = 0
-            layer_of_interest[arg_max_arrays == i] = 1
-
-            layer_of_interest[disabled_pixels] = 0
-
-            # Image.fromarray(layer_of_interest.astype(np.uint8) * 255).show()
-
-            print("layer_of_interest shape", layer_of_interest.shape, np.sort(np.unique(layer_of_interest)))
-            # colours -> red, green, blue, yellow, magenta, cyan, white
-            colours = (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)
-            colour = colours[i]
-
-            super_imposed = seg_utils.superimpose_mask_on_image(super_imposed, layer_of_interest, colour=colour).copy()
-
-        # super_imposed[..., -1] = super_imposed[..., -1] * 255.
-        display_list.append(super_imposed)
-        seg_utils.display(display_list, title=['Input Image', 'True Mask1', 'Predicted Mask', 'Superimposed Mask'])
-
-
-def _show_sample_predictions_pixelwise(
-        sample_image,
-        sample_mask,
-        model,
-        display_image=True,
-        class_weights=None,
-):
-    output_model = model(sample_image[tf.newaxis, ...])
-    print(output_model.numpy().shape)
-
-    output_mask = create_mask(output_model)
-    # print(sample_mask.shape)
-
-    scce = tf.keras.losses.CategoricalCrossentropy()
-    print("SparseCategoricalCrossentroy: " + str(scce(sample_mask, output_model[0]).numpy()))
-    print("Iou-Score: " + str(tasm.iou_score(sample_mask, output_model[0]).numpy()))
-    print("categorical Focal Dice Loss: " + str(tasm.categorical_focal_dice_loss(sample_mask, output_model[0]).numpy()))
-    if display_image:
-        seg_utils.display([sample_image, sample_mask, K.one_hot(K.squeeze(output_mask, axis=-1), 3)])
-
-
-def show_sample_predictions(
-        sample_image,
-        sample_mask,
-        model,
-        display_image=True,
-        class_weights=None,
-):
-    if seg_cf.CHOSEN_MASK_TYPE == seg_cf.BORDER_MASK_TYPE or seg_cf.BINARY_MODE:
-        _show_sample_predictions_border(sample_image, sample_mask, model, display_image, class_weights)
-    elif seg_cf.CHOSEN_MASK_TYPE == seg_cf.PIXEL_LEVEL_MASK_TYPE:
-        _show_sample_predictions_pixelwise(sample_image, sample_mask, model, display_image, class_weights)  # using the same function as border for now
-    else:
-        raise ValueError("CHOSEN_MASK_TYPE not supported")
 
 
 def calculate_pixel_count_all_datasets(paths, use_stored=False, survey_partially_per=1.0):

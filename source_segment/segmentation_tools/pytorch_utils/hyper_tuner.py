@@ -1,17 +1,34 @@
 import random
 
-import source_segment.audio_analysis_utils.utils as utils
 import csv
 import os
 from operator import itemgetter
 import time
 import numpy as np
-import pickle
+import json
 
 from hyperopt import hp, space_eval
 from hyperopt.pyll.base import Apply
 import itertools
 from hyperopt.base import miscs_update_idxs_vals
+
+
+def _save_dict_as_json(file_name, dict, over_write=False):
+    if os.path.exists(file_name) and over_write:
+        with open(file_name) as f:
+            existing_dict = json.load(f)
+
+        existing_dict.update(dict)
+
+        with open(file_name, 'w') as f:
+            json.dump(existing_dict, f)
+    else:
+        with open(file_name, 'w') as f:
+            json.dump(dict, f)
+
+
+def _get_minute_second_string(seconds):
+    return f"{int(seconds / 60)}mins {round(seconds % 60)}secs"
 
 
 class HyperTunerUtils:
@@ -195,11 +212,11 @@ class HyperTunerUtils:
         best_trail_details = self.get_best_trial_details_from_csv()
         print("\n----------------------------------")
         print(f"Best trial details: {best_trail_details}")
-        utils.save_dict_as_json(self.best_hp_json_save_path, best_trail_details)
+        _save_dict_as_json(self.best_hp_json_save_path, best_trail_details)
 
         # Display the time taken for training
-        print(f"\nTraining time: {utils.get_minute_second_string(time.time() - train_start_time)}")
-        print(f"Total time: {utils.get_minute_second_string(time.time() - self.start_time)}")
+        print(f"\nTraining time: {_get_minute_second_string(time.time() - train_start_time)}")
+        print(f"Total time: {_get_minute_second_string(time.time() - self.start_time)}")
         print("----------------------------------\n")
 
         self.tune_cnt += 1

@@ -123,3 +123,23 @@ def recall(pr, gt, eps=1e-7, threshold=None, ignore_channels=None):
     score = (tp + eps) / (tp + fn + eps)
 
     return score
+
+
+def dice_score(pr, gt, eps=1e-7, threshold=None, ignore_channels=None):
+    """Calculate Dice Score between ground truth and prediction
+    Args:
+        pr (torch.Tensor): predicted tensor
+        gt (torch.Tensor):  ground truth tensor
+        eps (float): epsilon to avoid zero division
+        threshold: threshold for outputs binarization
+    Returns:
+        float: Dice score
+    """
+    pr = _threshold(pr, threshold=threshold)
+    pr, gt = _take_channels(pr, gt, ignore_channels=ignore_channels)
+
+    intersection = torch.sum(gt * pr)
+    union = torch.sum(gt) + torch.sum(pr) + eps
+    dice = (2.0 * intersection + eps) / union
+
+    return dice

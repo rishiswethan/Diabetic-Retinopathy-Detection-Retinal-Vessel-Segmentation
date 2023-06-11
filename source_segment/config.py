@@ -33,26 +33,6 @@ TRAINING_LOG_PATH = TRAINED_MODEL_FOLDER + 'training_log.csv'  # training log pa
 TRAIN_CALLBACK_OBJ_PATH = TRAINED_MODEL_FOLDER + 'train_callback_obj.pkl'  # training callback object path
 VAL_CALLBACK_OBJ_PATH = TRAINED_MODEL_FOLDER + 'val_callback_obj.pkl'  # validation callback object path
 
-# Original dataset paths
-# ORG_DATASET_FOLDERS = {
-#     seg_cf.NYU: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'nyu' + ls,  # nyu data folder
-#     seg_cf.SCENE_NET: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SceneNet' + ls + 'scenenetrgbd' + ls,  # segmentation network folder
-#     seg_cf.SYNTHETIC_DATA: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SyntheticData' + ls,  # synthetic data folder
-#     seg_cf.ADE20K: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'ADE20K' + ls,  # ADE20K data folder
-#     seg_cf.SUN_RGBD: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SUNRGBD' + ls + 'SUNRGBD' + ls,  # SUNRGBD data folder
-#     seg_cf.HM3D: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'hm3d' + ls,  # HM3D data folder
-#     seg_cf.REPLICA: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'replica' + ls,  # replica data folder
-#     seg_cf.HM3D_CUST_V: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'hm3d_pano' + ls + "custom_view_angle",  # hm3d custom v data folder
-# }
-
-# CHASEDB = 'CHASEDB'
-# DRIVE = 'DRIVE'
-# STARE = 'STARE'
-# HRF = 'HRF'
-# DR_HAGIS = 'DR-HAGIS'
-# SMDG = 'SMDG'
-
-
 # Training dataset paths for pixel level segmentation
 TRAINING_FOLDER_PIXEL_LEVEL_PATHS = {
     seg_cf.CHASEDB: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.CHASEDB + ls,  # CHASEDB training data folder

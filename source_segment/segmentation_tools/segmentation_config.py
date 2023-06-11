@@ -11,10 +11,10 @@ SUN_RGBD_TEST_SPLIT_PER = 0.05  # test split percentage for sun rgbd dataset
 # training parameters
 ######################################################################################################################################################
 INITIAL_LR = 0.001
-BATCH_SIZE = 3
-HEIGHT = 1024
-WIDTH = 1024
-BACKBONE_NAME = "efficientnet-b3"
+BATCH_SIZE = 2
+HEIGHT = 1760
+WIDTH = 1760
+BACKBONE_NAME = "efficientnet-b0"
 WEIGHTS = 'imagenet'
 ACTIVATION = 'sigmoid'
 AUGMENTATION = True
@@ -25,15 +25,15 @@ PROB_APPLY_AUGMENTATION = 0.8
 # below are the parameters for TRAIN lr scheduler
 ENABLE_TRAIN_LR_SCHEDULER = True
 REDUCE_LR_COOLDOWN_TRAIN = 0
-REDUCE_LR_PATIENCE_TRAIN = 2
+REDUCE_LR_PATIENCE_TRAIN = 4
 REDUCE_LR_FACTOR_TRAIN = 0.4  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for VAL lr scheduler
 ENABLE_VAL_LR_SCHEDULER = False
-REDUCE_LR_COOLDOWN_VAL = 4
-REDUCE_LR_PATIENCE_VAL = 4
+REDUCE_LR_COOLDOWN_VAL = 8
+REDUCE_LR_PATIENCE_VAL = 8
 REDUCE_LR_FACTOR_VAL = 0.5  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for early stopping
-EARLY_STOPPING_MONITOR = 'train_loss'
+EARLY_STOPPING_MONITOR = 'val_loss'
 EARLY_STOPPING_PATIENCE = 20
 
 ######################################################################################################################################################
@@ -145,6 +145,7 @@ BINARY_MODE = len(CHOSEN_MASKS) == 2
 
 # chosen masks without unlabeled
 CHOSEN_MASKS_NO_UNLABELED = [mask for mask in CHOSEN_MASKS if mask != UNLABELED]
+NUM_CLASSES = len(CHOSEN_MASKS_NO_UNLABELED)
 
 # check min pixels classes
 if CHOSEN_MASK_TYPE == BORDER_MASK_TYPE:
