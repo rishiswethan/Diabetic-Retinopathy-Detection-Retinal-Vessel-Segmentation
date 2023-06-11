@@ -216,7 +216,7 @@ def _train(
             break
         break
 
-    loss = smp_losses.DiceLoss(class_weights=class_weights, mode='binary')
+    loss = smp.utils.losses.DiceLoss()
 
     metrics = [
         smp.utils.metrics.IoU(threshold=0.5, ignore_channels=[0]),
@@ -255,13 +255,12 @@ def _train(
         print(f'\nEpoch: {i + 1} LR: {optimizer.param_groups[0]["lr"]}\n')
         train_logs = train_epoch.run(chosen_train_set)
         valid_logs = valid_epoch.run(ValidationSet)
-        print()
 
         results = {
             'train_acc': train_logs['iou_score'],
             'val_acc': valid_logs['iou_score'],
-            'train_loss': train_logs['DiceLoss'],
-            'val_loss': valid_logs['DiceLoss'],
+            'train_loss': train_logs['dice_loss'],
+            'val_loss': valid_logs['dice_loss'],
         }
 
         other_stats = {"epochs": i}

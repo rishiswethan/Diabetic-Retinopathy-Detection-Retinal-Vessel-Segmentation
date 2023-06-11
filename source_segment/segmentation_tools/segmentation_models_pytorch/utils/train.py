@@ -47,6 +47,10 @@ class Epoch:
             disable=not (self.verbose),
         ) as iterator:
             for x, y in iterator:
+                # avoid batches with only one sample. to avoid a bug
+                if x.shape[0] == 1:
+                    continue
+
                 x, y = x.to(self.device), y.to(self.device)
                 loss, y_pred = self.batch_update(x, y)
 

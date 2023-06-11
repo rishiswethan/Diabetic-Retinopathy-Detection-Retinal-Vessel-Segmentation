@@ -11,10 +11,10 @@ SUN_RGBD_TEST_SPLIT_PER = 0.05  # test split percentage for sun rgbd dataset
 # training parameters
 ######################################################################################################################################################
 INITIAL_LR = 0.001
-BATCH_SIZE = 32
-HEIGHT = 320
-WIDTH = 320
-BACKBONE_NAME = "resnet152"
+BATCH_SIZE = 3
+HEIGHT = 1024
+WIDTH = 1024
+BACKBONE_NAME = "efficientnet-b3"
 WEIGHTS = 'imagenet'
 ACTIVATION = 'sigmoid'
 AUGMENTATION = True
@@ -63,14 +63,12 @@ MIN_PIXELS_MASK_ALL_CLASSES_PER = 0.01  # minimum percentage of pixels that must
 SPECIAL_DATASET_MIN_PIXELS = 0.05  # same as MIN_PIXELS_MASK_ALL_CLASSES_PER, but for special datasets
 
 # Dataset names
-NYU = 'nyu'
-SCENE_NET = 'scene_net'
-SYNTHETIC_DATA = 'synthetic_data'
-ADE20K = 'aed20k'
-SUN_RGBD = 'sun_rgbd'
-HM3D = 'hm3d'
-REPLICA = 'replica'
-HM3D_CUST_V = 'hm3d_cust_v'
+CHASEDB = 'CHASEDB'
+DRIVE = 'DRIVE'
+STARE = 'STARE'
+HRF = 'HRF'
+DR_HAGIS = 'DR-HAGIS'
+SMDG = 'SMDG'
 
 # Mask types
 PIXEL_LEVEL_MASK_TYPE = 'pixel_level_mask_type'  # If CHOSEN_MASK_TYPE is PIXEL_LEVEL, then this is the class name for the pixel level mask
@@ -87,17 +85,16 @@ TRAIN_TEST_MASKS_FOLDER = "masks" + os.sep
 CHOSEN_MASKS = [
     UNLABELED,
     VESSEL,
-    # WALL,
 ]
 
 # choose which training datasets to use
 CHOSEN_TRAINING_DATASETS = [
-    # NYU,
-    # SCENE_NET,
-    ADE20K,  # This is a benchmark dataset
-    SUN_RGBD,  # This one has NYU data and some other datasets as well
-    HM3D_CUST_V,
-    REPLICA
+    CHASEDB,
+    DRIVE,
+    STARE,
+    HRF,
+    DR_HAGIS,
+    SMDG
 ]
 
 # chosen mask type
@@ -106,12 +103,10 @@ TARGET_BORDER_CLASS = VESSEL  # Not used if CHOSEN_MASK_TYPE is PIXEL_LEVEL
 
 # choose special training datasets. These datasets have augmented data, so only one image per folder is used. Values are functions that return the unique folder names
 SPECIAL_TRAINING_DATASETS = [
-    SCENE_NET,
-    HM3D_CUST_V
 ]
 
 TEST_SET_DATASETS = [
-    ADE20K
+    DRIVE
 ]
 
 USE_STORED_PIXEL_COUNTS = False  # if True, then the pixel counts will be loaded from the file. If False, then the pixel counts will be calculated
@@ -122,30 +117,9 @@ DISALLOW_SPECIAL_DATASETS_IN_TEST = False  # if True, then the special training 
 USE_SPECIAL_DATA_IN_WEIGHTS_CALC = False  # if True, then the special training datasets will be used in the calculation of the weights for each class
 DISABLE_BACKGROUND_IN_METRICS = False  # if True, then the background class will be disabled in the metrics
 
-######################################################################################################################################################
-# Inference parameters
-
+# INFERENCE PARAMETERS
 INFERENCE_MODEL = ['BEST_TRAINING_LOSS', 'BEST_VAL_LOSS'][1]  # choose between BEST_TRAINING_LOSS and BEST_VAL_LOSS
-EXTRACTION_MODE_360 = ["cubemap", "perspective", "simple_crop"][1]  # choose between cubemap and perspective for 360 images extraction
-
-# 360 prediction parameters
-PERSPECTIVE_SQUARE_SIZE = 512  # size of the square image that will be extracted from the perspective extraction
-INFERENCE_360_SKIP_ROOF = True  # if True, then the roof will be skipped in the inference
-BLUR_FACTOR = 10  # Blur will range from 0 to BLUR_FACTOR
-
-# First main fov parameters
-PREDICTION_TH = 0.8  # threshold for the prediction mask and primary fov
-INFERENCE_360_PERSPECTIVE_FOV_MAIN = 75  # main fov for the perspective extraction. Default viewing angle is always 0 or 360
-INFERENCE_360_PERSPECTIVE_MAIN_H_INC = 10  # horizontal increment by this angle for the main fov
-INFERENCE_MAIN_OVERLAP_TH = 128  # overlap threshold for the main fov. Setting it higher will mean more predictions
-INFERENCE_360_V_VIEWING_ANGLE_MAIN = 360  # vertical viewing angle for the perspective extraction during main fov
-
-# Max fov parameters (used to extract content missed by the main fov)
-PREDICTION_TH_MAX_FOV = 0.8
-INFERENCE_360_PERSPECTIVE_FOV_MAX = 140
-INFERENCE_360_PERSPECTIVE_MAX_H_INC = 10
-INFERENCE_MAX_OVERLAP_TH = 128
-INFERENCE_360_V_VIEWING_ANGLE_MAX = 360
+PREDICTION_TH = 0.5  # prediction threshold
 
 ######################################################################################################################################################
 # Do not change below this line. Automatically set parameters according to the above parameters

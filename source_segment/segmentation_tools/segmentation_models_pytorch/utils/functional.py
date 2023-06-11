@@ -17,27 +17,19 @@ def _threshold(x, threshold=None):
         return x
 
 
-def iou(pr, gt, eps=1e-7, threshold=None, ignore_channels=None, class_weights=None):
+def iou(pr, gt, eps=1e-7, threshold=None, ignore_channels=None):
     """Calculate Intersection over Union between ground truth and prediction
     Args:
         pr (torch.Tensor): predicted tensor
         gt (torch.Tensor):  ground truth tensor
         eps (float): epsilon to avoid zero division
         threshold: threshold for outputs binarization
-        class_weights: weights for each class
     Returns:
         float: IoU (Jaccard) score
     """
 
     pr = _threshold(pr, threshold=threshold)
     pr, gt = _take_channels(pr, gt, ignore_channels=ignore_channels)
-
-    if class_weights is not None:
-        if isinstance(class_weights, torch.Tensor):
-            class_weights = class_weights.clone().detach().to(gt.device)
-        else:
-            class_weights = torch.tensor(class_weights).to(gt.device)
-        gt = gt * class_weights.view(1, -1, 1, 1)
 
     intersection = torch.sum(gt * pr)
     union = torch.sum(gt) + torch.sum(pr) - intersection + eps

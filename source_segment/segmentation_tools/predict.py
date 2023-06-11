@@ -29,10 +29,9 @@ N_CLASSES = len(seg_cf.CHOSEN_MASKS)
 def predict_image(image, model, display_image=False, prediction_th=seg_cf.PREDICTION_TH, mode_360=False):
     image_org = image.copy()
     image = cv2.resize(image, (WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
+    image_org = image.copy()
 
     input("enter")
-    plt.imshow(image)
-    plt.show()
 
     image = np.transpose(image, (2, 0, 1))
     image = np.expand_dims(image, axis=0)
@@ -46,6 +45,16 @@ def predict_image(image, model, display_image=False, prediction_th=seg_cf.PREDIC
     output_model = np.transpose(output_model, (1, 2, 0))
 
     print("output model shape", output_model.shape)
+
+    plt.figure(figsize=(20, 20))
+
+    plt.subplot(1, 2, 1)
+    plt.imshow(image_org)
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(output_model[..., 1])
+
+    plt.show()
 
     display_list, title_list, masks_list = [], [], []
     display_list.append(image)
@@ -73,7 +82,7 @@ def predict_image(image, model, display_image=False, prediction_th=seg_cf.PREDIC
         # super_imposed = seg_utils.superimpose_mask_on_image(super_imposed, layer_of_interest, colour=colour).copy()
         super_imposed = seg_utils.super_impose_RGBA(super_imposed, (1 - layer_of_interest) * 255.)
 
-        layer_of_interest = layer_of_interest[..., tf.newaxis]
+        layer_of_interest = layer_of_interest[..., np.newaxis]
         title_list.append(f"Mask {i}")
         display_list.append(layer_of_interest)
         masks_list.append(layer_of_interest)
@@ -107,7 +116,7 @@ def run_prediction_on_generator(model, pred_set, display_image=False, prediction
 
 
 def run_images(
-        input_images_folder=cf.FLOOR_DETECT_INPUT_FOLDER, prediction_dir=cf.FLOOR_DETECT_OUTPUT_FOLDER, display_image=False, save_name_ext=".png", mode_360=False, prediction_th=seg_cf.PREDICTION_TH
+        input_images_folder=cf.INPUT_FOLDER, prediction_dir=cf.OUTPUT_FOLDER, display_image=False, save_name_ext=".png", mode_360=False, prediction_th=seg_cf.PREDICTION_TH
 ):
     prediction_generator = data_handling.SimpleGenerator(input_images_folder)
 

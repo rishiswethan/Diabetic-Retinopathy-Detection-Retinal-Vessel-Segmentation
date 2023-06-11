@@ -21,7 +21,7 @@ SIMPLE_OUTPUT_FOLDER = MAIN_PATH + 'output' + ls  # simple outputs parent folder
 # Segmentation
 ######################################################################################################################################################
 # Primary paths
-_DATA_FOLDER = MAIN_PATH + 'data' + ls  # data folder
+_DATA_FOLDER = MAIN_PATH + 'data_segment' + ls  # data folder
 _ORIGINAL_DATASET_PRIMARY_FOLDER = MAIN_PATH + ''  # original dataset folder
 _TRAINING_DATASET_PRIMARY_FOLDER = _DATA_FOLDER + 'training_data' + ls  # training dataset folder
 TRAINED_MODEL_FOLDER = MAIN_PATH + 'trained_models' + ls  # trained model folder
@@ -34,38 +34,43 @@ TRAIN_CALLBACK_OBJ_PATH = TRAINED_MODEL_FOLDER + 'train_callback_obj.pkl'  # tra
 VAL_CALLBACK_OBJ_PATH = TRAINED_MODEL_FOLDER + 'val_callback_obj.pkl'  # validation callback object path
 
 # Original dataset paths
-ORG_DATASET_FOLDERS = {
-    seg_cf.NYU: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'nyu' + ls,  # nyu data folder
-    seg_cf.SCENE_NET: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SceneNet' + ls + 'scenenetrgbd' + ls,  # segmentation network folder
-    seg_cf.SYNTHETIC_DATA: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SyntheticData' + ls,  # synthetic data folder
-    seg_cf.ADE20K: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'ADE20K' + ls,  # ADE20K data folder
-    seg_cf.SUN_RGBD: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SUNRGBD' + ls + 'SUNRGBD' + ls,  # SUNRGBD data folder
-    seg_cf.HM3D: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'hm3d' + ls,  # HM3D data folder
-    seg_cf.REPLICA: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'replica' + ls,  # replica data folder
-    seg_cf.HM3D_CUST_V: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'hm3d_pano' + ls + "custom_view_angle",  # hm3d custom v data folder
-}
+# ORG_DATASET_FOLDERS = {
+#     seg_cf.NYU: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'nyu' + ls,  # nyu data folder
+#     seg_cf.SCENE_NET: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SceneNet' + ls + 'scenenetrgbd' + ls,  # segmentation network folder
+#     seg_cf.SYNTHETIC_DATA: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SyntheticData' + ls,  # synthetic data folder
+#     seg_cf.ADE20K: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'ADE20K' + ls,  # ADE20K data folder
+#     seg_cf.SUN_RGBD: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'SUNRGBD' + ls + 'SUNRGBD' + ls,  # SUNRGBD data folder
+#     seg_cf.HM3D: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'hm3d' + ls,  # HM3D data folder
+#     seg_cf.REPLICA: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'replica' + ls,  # replica data folder
+#     seg_cf.HM3D_CUST_V: _ORIGINAL_DATASET_PRIMARY_FOLDER + 'hm3d_pano' + ls + "custom_view_angle",  # hm3d custom v data folder
+# }
+
+# CHASEDB = 'CHASEDB'
+# DRIVE = 'DRIVE'
+# STARE = 'STARE'
+# HRF = 'HRF'
+# DR_HAGIS = 'DR-HAGIS'
+# SMDG = 'SMDG'
+
 
 # Training dataset paths for pixel level segmentation
 TRAINING_FOLDER_PIXEL_LEVEL_PATHS = {
-    seg_cf.NYU: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.NYU + ls,  # nyu training data folder
-    seg_cf.SCENE_NET: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SCENE_NET + ls,  # segmentation network training data folder
-    seg_cf.SYNTHETIC_DATA: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SYNTHETIC_DATA + ls,  # synthetic data training data folder
-    seg_cf.ADE20K: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.ADE20K + ls,  # ADE20K training data folder
-    seg_cf.SUN_RGBD: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SUN_RGBD + ls,  # SUNRGBD training data folder
-    seg_cf.HM3D: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.HM3D + ls,  # HM3D training data folder.
-    seg_cf.REPLICA: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.REPLICA + ls,  # replica training data folder.
-    seg_cf.HM3D_CUST_V: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.HM3D_CUST_V + ls,  # hm3d custom v training data folder.
+    seg_cf.CHASEDB: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.CHASEDB + ls,  # CHASEDB training data folder
+    seg_cf.DRIVE: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.DRIVE + ls,  # DRIVE training data folder
+    seg_cf.STARE: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.STARE + ls,  # STARE training data folder
+    seg_cf.HRF: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.HRF + ls,  # HRF training data folder
+    seg_cf.DR_HAGIS: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.DR_HAGIS + ls,  # DR-HAGIS training data folder
+    seg_cf.SMDG: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SMDG + ls,  # SMDG training data folder
 }
 
 # Training dataset floor border paths
 TRAINING_FOLDER_BORDER_LEVEL_PATHS = {
-    seg_cf.NYU: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.NYU + "_border_floor" + ls,  # nyu training data floor border folder
-    seg_cf.SCENE_NET: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SCENE_NET + ls,  # segmentation network training data floor border folder. We use the same folder as pixel level segmentation. Border is rendered on the fly
-    seg_cf.SYNTHETIC_DATA: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SYNTHETIC_DATA + "_border_floor" + ls,  # synthetic data training data floor border folder
-    seg_cf.ADE20K: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.ADE20K + "_border_floor" + ls,  # ADE20K training data floor border folder
-    seg_cf.SUN_RGBD: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SUN_RGBD + "_border_floor" + ls,  # SUNRGBD training data floor border folder
-    seg_cf.HM3D: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.HM3D + "_border_floor" + ls,  # HM3D training data floor border folder
-    seg_cf.REPLICA: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.REPLICA + "_border_floor" + ls,  # replica training data floor border folder
+    seg_cf.CHASEDB: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.CHASEDB + "_border" + ls,  # nyu training data floor border folder
+    seg_cf.DRIVE: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.DRIVE + "_border" + ls,  # segmentation network training data floor border folder
+    seg_cf.STARE: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.STARE + "_border" + ls,  # synthetic data training data floor border folder
+    seg_cf.HRF: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.HRF + "_border" + ls,  # ADE20K training data floor border folder
+    seg_cf.DR_HAGIS: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.DR_HAGIS + "_border" + ls,  # SUNRGBD training data floor border folder
+    seg_cf.SMDG: _TRAINING_DATASET_PRIMARY_FOLDER + seg_cf.SMDG + "_border" + ls,  # HM3D training data floor border folder
 }
 
 # path lists names

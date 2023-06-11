@@ -153,47 +153,49 @@ def crop_and_stretch(image,
 
 
 # define heavy augmentations
-def get_training_augmentation(height, width):
+def get_training_augmentation(height, width, prob_each_aug=0.9):
     def _get_training_augmentation(height, width):
         train_transform = [
 
-            albu.HorizontalFlip(p=0.5),
-
-            albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=0.75, border_mode=0),
-            # albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=1),
-
-            albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
-            albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7),
-
-            albu.IAAAdditiveGaussianNoise(p=0.3),
-            albu.IAAPerspective(p=0.5),
-            albu.Rotate(limit=60, p=1.0),
-
-            albu.OneOf(
-                [
-                    albu.CLAHE(p=1),
-                    albu.RandomBrightness(p=1),
-                    albu.RandomGamma(p=1),
-                ],
-                p=0.9,
-            ),
-
-            albu.OneOf(
-                [
-                    albu.IAASharpen(p=1),
-                    albu.Blur(blur_limit=3, p=1),
-                    albu.MotionBlur(blur_limit=3, p=1),
-                ],
-                p=0.9,
-            ),
-
-            albu.OneOf(
-                [
-                    albu.RandomContrast(p=1),
-                    albu.HueSaturationValue(p=1),
-                ],
-                p=0.9,
-            ),
+            # albu.HorizontalFlip(p=0.5),
+            #
+            # albu.ShiftScaleRotate(scale_limit=0.2, rotate_limit=0, shift_limit=0.0, p=0.75, border_mode=0),
+            # # albu.RandomResizedCrop(height=height, width=width, scale=(0.5, 1.5), ratio=(0.75, 1.3333333333333333), interpolation=1, always_apply=True, p=1),
+            #
+            # albu.PadIfNeeded(min_height=height, min_width=width, always_apply=True, border_mode=0),
+            # albu.RandomCrop(height=height, width=width, always_apply=True, p=0.7),
+            #
+            albu.HorizontalFlip(p=prob_each_aug),
+            #
+            albu.VerticalFlip(p=prob_each_aug),
+            #
+            albu.Rotate(limit=180, p=prob_each_aug, border_mode=cv2.BORDER_CONSTANT),
+            #
+            # albu.OneOf(
+            #     [
+            #         albu.CLAHE(p=1),
+            #         albu.RandomBrightness(p=1),
+            #         albu.RandomGamma(p=1),
+            #     ],
+            #     p=0.9,
+            # ),
+            #
+            # albu.OneOf(
+            #     [
+            #         albu.IAASharpen(p=1),
+            #         albu.Blur(blur_limit=3, p=1),
+            #         albu.MotionBlur(blur_limit=3, p=1),
+            #     ],
+            #     p=0.9,
+            # ),
+            #
+            # albu.OneOf(
+            #     [
+            #         albu.RandomContrast(p=1),
+            #         albu.HueSaturationValue(p=1),
+            #     ],
+            #     p=0.9,
+            # ),
         ]
         return albu.Compose(train_transform)
 

@@ -1,11 +1,9 @@
 import timm
 import functools
 import torch.utils.model_zoo as model_zoo
-import torch
 
 from .resnet import resnet_encoders
 from .dpn import dpn_encoders
-from .sam import sam_vit_encoders, SamVitEncoder
 from .vgg import vgg_encoders
 from .senet import senet_encoders
 from .densenet import densenet_encoders
@@ -48,34 +46,6 @@ encoders.update(timm_mobilenetv3_encoders)
 encoders.update(timm_gernet_encoders)
 encoders.update(mix_transformer_encoders)
 encoders.update(mobileone_encoders)
-encoders.update(sam_vit_encoders)
-
-
-def get_pretrained_settings(encoders: dict, encoder_name: str, weights: str) -> dict:
-    """Get pretrained settings for encoder from encoders collection.
-
-    Args:
-        encoders: collection of encoders
-        encoder_name: name of encoder in collection
-        weights: one of ``None`` (random initialization), ``imagenet`` or other pretrained settings
-
-    Returns:
-        pretrained settings for encoder
-
-    Raises:
-        KeyError: in case of wrong encoder name or pretrained settings name
-    """
-    try:
-        settings = encoders[encoder_name]["pretrained_settings"][weights]
-    except KeyError:
-        raise KeyError(
-            "Wrong pretrained weights `{}` for encoder `{}`. Available options are: {}".format(
-                weights,
-                encoder_name,
-                list(encoders[encoder_name]["pretrained_settings"].keys()),
-            )
-        )
-    return settings
 
 
 def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **kwargs):
@@ -98,17 +68,20 @@ def get_encoder(name, in_channels=3, depth=5, weights=None, output_stride=32, **
         raise KeyError("Wrong encoder name `{}`, supported encoders: {}".format(name, list(encoders.keys())))
 
     params = encoders[name]["params"]
-    if name.startswith("sam-"):
-        params.update(**kwargs)
-        params.update(dict(name=name[4:]))
-        if depth is not None:
-            params.update(depth=depth)
-    else:
-        params.update(depth=depth)
+    params.update(depth=depth)
     encoder = Encoder(**params)
 
     if weights is not None:
-        settings = get_pretrained_settings(encoders, name, weights)
+        try:
+            settings = encoders[name]["pretrained_settings"][weights]
+        except KeyError:
+            raise KeyError(
+                "Wrong pretrained weights `{}` for encoder `{}`. Available options are: {}".format(
+                    weights,
+                    name,
+                    list(encoders[name]["pretrained_settings"].keys()),
+                )
+            )
         encoder.load_state_dict(model_zoo.load_url(settings["url"]))
 
     encoder.set_in_channels(in_channels, pretrained=weights is not None)
@@ -128,7 +101,7 @@ def get_preprocessing_params(encoder_name, pretrained="imagenet"):
         encoder_name = encoder_name[3:]
         if not timm.models.is_model_pretrained(encoder_name):
             raise ValueError(f"{encoder_name} does not have pretrained weights and preprocessing parameters")
-        settings = timm.models.get_pretrained_cfg(encoder_name)
+        settings = timm.models.get_pretrained_cfg(encoder_name).__dict__
     else:
         all_settings = encoders[encoder_name]["pretrained_settings"]
         if pretrained not in all_settings.keys():
@@ -138,8 +111,8 @@ def get_preprocessing_params(encoder_name, pretrained="imagenet"):
     formatted_settings = {}
     formatted_settings["input_space"] = settings.get("input_space", "RGB")
     formatted_settings["input_range"] = list(settings.get("input_range", [0, 1]))
-    formatted_settings["mean"] = list(settings.get("mean"))
-    formatted_settings["std"] = list(settings.get("std"))
+    formatted_settings["mean"] = list(settings["mean"])
+    formatted_settings["std"] = list(settings["std"])
 
     return formatted_settings
 

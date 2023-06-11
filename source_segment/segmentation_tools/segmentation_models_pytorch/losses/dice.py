@@ -11,17 +11,16 @@ __all__ = ["DiceLoss"]
 
 class DiceLoss(_Loss):
     def __init__(
-            self,
-            mode: str,
-            classes: Optional[List[int]] = None,
-            class_weights=None,
-            log_loss: bool = False,
-            from_logits: bool = True,
-            smooth: float = 0.0,
-            ignore_index: Optional[int] = None,
-            eps: float = 1e-7,
+        self,
+        mode: str,
+        classes: Optional[List[int]] = None,
+        log_loss: bool = False,
+        from_logits: bool = True,
+        smooth: float = 0.0,
+        ignore_index: Optional[int] = None,
+        eps: float = 1e-7,
     ):
-        """Implementation of Dice loss for image segmentation task.
+        """Dice loss for image segmentation task.
         It supports binary, multiclass and multilabel cases
 
         Args:
@@ -51,14 +50,6 @@ class DiceLoss(_Loss):
         self.classes = classes
         self.from_logits = from_logits
         self.smooth = smooth
-        self.class_weights = class_weights
-
-        if self.class_weights is not None:
-            sum_of_weights = sum(self.class_weights)
-            for i in range(0, len(self.class_weights)):
-                self.class_weights[i] = self.class_weights[i] / sum_of_weights
-
-        self.class_weights_tensor = None
         self.eps = eps
         self.log_loss = log_loss
         self.ignore_index = ignore_index
@@ -66,24 +57,6 @@ class DiceLoss(_Loss):
     def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 
         assert y_true.size(0) == y_pred.size(0)
-        if self.class_weights is None:
-            self.class_weights = [1 / y_true.size(1)] * y_true.size(1)
-        assert len(self.class_weights) == y_true.size(1)
-
-        print("class_weights: ", self.class_weights)
-
-        if self.class_weights_tensor is None:
-            # TODO: Add check if GPU or CPU
-            if torch.cuda.is_available():
-                if isinstance(self.class_weights, torch.Tensor):
-                    self.class_weights_tensor = self.class_weights.clone().detach().cuda()
-                else:
-                    self.class_weights_tensor = torch.tensor(self.class_weights).cuda()
-            else:
-                if isinstance(self.class_weights, torch.Tensor):
-                    self.class_weights_tensor = self.class_weights.clone().detach().cpu()
-                else:
-                    self.class_weights_tensor = torch.tensor(self.class_weights).cpu()
 
         if self.from_logits:
             # Apply activations to get [0..1] class probabilities
@@ -116,10 +89,10 @@ class DiceLoss(_Loss):
                 y_pred = y_pred * mask.unsqueeze(1)
 
                 y_true = F.one_hot((y_true * mask).to(torch.long), num_classes)  # N,H*W -> N,H*W, C
-                y_true = y_true.permute(0, 2, 1) * mask.unsqueeze(1)  # H, C, H*W
+                y_true = y_true.permute(0, 2, 1) * mask.unsqueeze(1)  # N, C, H*W
             else:
                 y_true = F.one_hot(y_true, num_classes)  # N,H*W -> N,H*W, C
-                y_true = y_true.permute(0, 2, 1)  # H, C, H*W
+                y_true = y_true.permute(0, 2, 1)  # N, C, H*W
 
         if self.mode == MULTILABEL_MODE:
             y_true = y_true.view(bs, num_classes, -1)
@@ -131,13 +104,11 @@ class DiceLoss(_Loss):
                 y_true = y_true * mask
 
         scores = self.compute_score(y_pred, y_true.type_as(y_pred), smooth=self.smooth, eps=self.eps, dims=dims)
+
         if self.log_loss:
             loss = -torch.log(scores.clamp_min(self.eps))
         else:
             loss = 1.0 - scores
-
-        # Made by: https://github.com/pytorch/pytorch/issues/1249#issuecomment-339904369
-        loss = torch.multiply(loss, self.class_weights_tensor)
 
         # Dice loss is undefined for non-empty classes
         # So we zero contribution of channel that does not have true pixels
@@ -149,9 +120,8 @@ class DiceLoss(_Loss):
 
         if self.classes is not None:
             loss = loss[self.classes]
-        sum_loss = loss.sum()
-        return sum_loss
-        # return aggregate_loss(loss)
+
+        return self.aggregate_loss(loss)
 
     def aggregate_loss(self, loss):
         return loss.mean()

@@ -10,10 +10,10 @@ if __name__ == '__main__':
     if ch == '1':
         print("Initializing image processing toolkit...\n\n")
 
-        import source.config as config
-        import source.image as image
-        import source.utils as utils
-        import source.tools_360.change_tile_colour as change_tile_colour
+        import source_segment.config as config
+        import source_segment.image as image
+        import source_segment.utils as utils
+        import source_segment.tools_360.change_tile_colour as change_tile_colour
 
         ch = input("1) Equirectungular to Cubemap\n"
                    "2) Cubemap to Equirectungular\n"
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     elif ch == '2':
         print("Initializing point cloud toolkit...\n\n")
 
-        import source.point_cloud_toolkit.point_cloud as pt_cloud
+        import source_segment.point_cloud_toolkit.point_cloud as pt_cloud
 
         ch = input("1) Point cloud coordinate extract and combine\n")
         if ch == '1':
@@ -95,34 +95,19 @@ if __name__ == '__main__':
     elif ch == '3':
         print("Initializing segmentation toolkit...\n\n")
 
-        import source.config as config
-        import source.image as image
-        import source.utils as utils
-        import source.segmentation_tools.train as train
-        import source.segmentation_tools.data_handling as data_handling
-        import source.segmentation_tools.predict as predict
+        import source_segment.config as config
+        import source_segment.utils as utils
+        import source_segment.segmentation_tools.train as train
+        import source_segment.segmentation_tools.data_handling as data_handling
+        import source_segment.segmentation_tools.predict as predict
 
         ch = input(
             f"1) Detect 360 image in '{config.INPUT_FOLDER.split(os.sep)[-2]}' folder and stitch them\n"
-            f"2) Detect all 360 images in '{config.INPUT_FOLDER.split(os.sep)[-2]}/{config.FLOOR_DETECT_360_INPUT_FOLDER.split(os.sep)[-2]}' folder\n"
-            f"3) Detect all normal images in '{config.FLOOR_DETECT_INPUT_FOLDER.split(os.sep)[-2]}' folder\n"
+            f"2) Detect all 360 images in '{config.INPUT_FOLDER.split(os.sep)[-2]}/{config.INPUT_FOLDER.split(os.sep)[-2]}' folder\n"
+            f"3) Detect all normal images in '{config.INPUT_FOLDER.split(os.sep)[-2]}' folder\n"
             "4) Additional options\n"
             )
-        if ch == '1':
-            image_name_input = input("Enter the name of the equirectangular image in the input_folder: ")
-            image_name = utils.find_filename_match(image_name_input, config.INPUT_FOLDER)
-            if image_name != image_name_input:
-                print("The image name was changed to: " + image_name.split(config.INPUT_FOLDER)[1])
-
-            include_roof = 'y'
-            image.extract_and_predict(
-                input_path=image_name,
-                predict=True,
-                skip_roof='y'
-            )
-        elif ch == "2":
-            image.predict_all_360_images()
-        elif ch == '3':
+        if ch == '3':
             predict.run_images()
         elif ch == '4':
             ch = input("1) New model using random initialisation\n"
