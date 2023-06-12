@@ -6,7 +6,7 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import config as cf
+import source_classify.config as cf
 
 NUM_CLASSES = cf.NUM_CLASSES
 

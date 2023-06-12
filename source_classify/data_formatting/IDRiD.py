@@ -1,6 +1,6 @@
-import source_segment.config as config
-import source_segment.utils as utils
-import source_segment.data_formatting.aptos2019 as aptos2019
+import source_classify.config as config
+import source_classify.utils as utils
+import source_classify.data_formatting.aptos2019 as aptos2019
 
 import os
 import shutil

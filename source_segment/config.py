@@ -1,4 +1,6 @@
 import os
+# import source_segment.segmentation_tools.segmentation_config as seg_cf
+
 import source_segment.segmentation_tools.segmentation_config as seg_cf
 
 windows = (True if (os.name == 'nt') else False)

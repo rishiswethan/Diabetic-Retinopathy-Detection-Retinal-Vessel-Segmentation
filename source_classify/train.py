@@ -7,17 +7,17 @@ import torch
 import matplotlib.pyplot as plt
 import time
 from hyperopt import fmin, space_eval, Trials
-
-import pytorch_utils.callbacks as pt_callbacks
-import pytorch_utils.training_utils as pt_train
-import pytorch_utils.hyper_tuner as pt_tuner
-import pytorch_utils.visualize as pt_visualize
 from pytorch_grad_cam import GradCAM
 
-import data_handling
-import config as cf
-import utils
-import models
+import source_classify.pytorch_utils.callbacks as pt_callbacks
+import source_classify.pytorch_utils.training_utils as pt_train
+import source_classify.pytorch_utils.hyper_tuner as pt_tuner
+import source_classify.pytorch_utils.visualize as pt_visualize
+
+import source_classify.data_handling as data_handling
+import source_classify.config as cf
+import source_classify.utils as utils
+import source_classify.models as models
 
 #############################################################################
 # define constants

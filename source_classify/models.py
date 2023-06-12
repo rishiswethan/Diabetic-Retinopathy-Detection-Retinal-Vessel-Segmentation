@@ -2,7 +2,7 @@ import torch.nn as nn
 from torchvision import models
 import pretrainedmodels
 
-import pytorch_utils.training_utils as pt_train
+import source_classify.pytorch_utils.training_utils as pt_train
 import source_classify.config as cf
 
 

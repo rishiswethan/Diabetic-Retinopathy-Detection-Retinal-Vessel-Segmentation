@@ -2,14 +2,14 @@ import os
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-
-import config as cf
-import data_handling
-import models
-import utils
-
-import pytorch_utils.visualize as pt_visualize
 from pytorch_grad_cam import GradCAM
+
+import source_classify.config as cf
+import source_classify.data_handling as data_handling
+import source_classify.models as models
+import source_classify.utils as utils
+
+import source_classify.pytorch_utils.visualize as pt_visualize
 
 MODEL_SAVE_PATH = cf.MODEL_SAVE_PATH_BEST_VAL_LOSS
 IMAGE_SIZE = cf.SQUARE_SIZE

@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader
 import torch
 import matplotlib.pyplot as plt
 
-import config as cf
-import utils
+import source_classify.config as cf
+import source_classify.utils as utils
 
 DATASETS_IN_USE = cf.DATASETS_IN_USE
 TEST_DATASETS = cf.TEST_DATASETS
