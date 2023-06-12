@@ -15,7 +15,7 @@ This project was tested on Ubuntu 22.04 LTS with Python 3.10
          - If that didn't work, simply install the CPU version for now. It'll slow down transcription but it'll work.
            - `pip install torch`
            
-3) `python source/run.py`
+3) `python run.py`
     - You can follow the on-screen instructions to run the program.
     - Input folder contains sample images to test the program.
    Try feeding the folder path, and try to feed a single image path as input to the program.
