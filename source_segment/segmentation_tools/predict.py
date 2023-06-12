@@ -133,8 +133,11 @@ class Predict:
 
             raise TypeError("images must be a list of image paths or a single image path")
 
+        print("\n\nPredicting...\n")
+
         outputs = []
         preprocessed_images = []
+        img_cnt = 1
         for batch_images in self._batch(images, self.batch_size):
             tensor_images = []
 
@@ -146,7 +149,8 @@ class Predict:
                 # covert the image to pytorch format
                 image = image.transpose(2, 0, 1)
 
-                print("image: ", image.shape)
+                print(f"Image {img_cnt}: ", image.shape)
+                img_cnt += 1
 
                 preprocessed_images.append(image)
 

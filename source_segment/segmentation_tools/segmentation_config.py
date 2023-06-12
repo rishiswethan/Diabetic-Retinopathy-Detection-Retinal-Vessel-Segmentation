@@ -154,3 +154,4 @@ elif CHOSEN_MASK_TYPE == PIXEL_LEVEL_MASK_TYPE:
     CHECK_MIN_PIXELS_CLASSES = CHOSEN_MASKS_NO_UNLABELED
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print("DEVICE:", DEVICE, "\n")

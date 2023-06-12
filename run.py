@@ -1,3 +1,6 @@
+import os
+
+os.environ['OPENCV_LOG_LEVEL'] = 'SILENT'
 
 if __name__ == "__main__":
     ch = input("1) Classify DR\n"

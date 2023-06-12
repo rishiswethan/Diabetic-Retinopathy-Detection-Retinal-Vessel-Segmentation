@@ -7,6 +7,7 @@ PROJECT_NAME = str(os.path.dirname(os.path.abspath(__file__)).split('source_clas
 windows = (True if (os.name == 'nt') else False)
 
 DEVICE = 'cuda' if cuda.is_available() else 'cpu'
+print("DEVICE:", DEVICE, "\n")
 
 ######################################################################################################################################################
 # Folders

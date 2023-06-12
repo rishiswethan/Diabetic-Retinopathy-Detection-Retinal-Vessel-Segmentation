@@ -5,6 +5,7 @@ import keyboard
 
 import source_segment.config as config
 
+
 def load_dict_from_json(file_name):
     with open(file_name) as f:
         d = json.load(f)
