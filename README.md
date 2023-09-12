@@ -23,10 +23,10 @@ This project was tested on Ubuntu 22.04 LTS with Python 3.10
 
 ### Display Items:
 ### Classification and Segmentation:
-<img src="display_samples/Diabetic retinopathy detection in fundus photography of the Human Eye using AI.png" width="700">
+<img src="display_samples/Diabetic retinopathy detection in fundus photography of the Human Eye using AI.png" width="500">
 
 ### Confusion Matrix:
-<img src="display_samples/plot_confusion_matrix.png" width="700">
+<img src="display_samples/plot_confusion_matrix.png" width="500">
 
 ### More Samples:
-<img src="display_samples/fundus_diabetic_retinopathy_detection.png" width="700">
+<img src="display_samples/fundus_diabetic_retinopathy_detection.png" width="500">
