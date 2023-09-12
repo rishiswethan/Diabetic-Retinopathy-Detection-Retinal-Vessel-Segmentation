@@ -1,5 +1,15 @@
 This project was tested on Ubuntu 22.04 LTS with Python 3.10
 
+### Summary:
+There are 2 aspects to this project:
+1. Classification of Diabetic Retinopathy in fundus images. Classification is done into 5 classes:
+   - 0: No DR
+   - 1: Mild
+   - 2: Moderate
+   - 3: Severe
+   - 4: Proliferative DR
+2. Segmentation of blood vessels in fundus images
+
 ### How to run the program:
 1. Install python 3.10
 2) Install everything you need
