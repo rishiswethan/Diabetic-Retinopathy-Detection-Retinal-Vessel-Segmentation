@@ -1,0 +1,2 @@
+trained_models/segment_best_val_loss.pth filter=lfs diff=lfs merge=lfs -text
+trained_models/best_val_loss.pt filter=lfs diff=lfs merge=lfs -text
