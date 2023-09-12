@@ -14,7 +14,7 @@ INITIAL_LR = 0.001
 BATCH_SIZE = 2
 HEIGHT = 1760
 WIDTH = 1760
-BACKBONE_NAME = "efficientnet-b0"
+BACKBONE_NAME = "efficientnet-b2"
 WEIGHTS = 'imagenet'
 ACTIVATION = 'sigmoid'
 AUGMENTATION = True
@@ -33,7 +33,8 @@ REDUCE_LR_COOLDOWN_VAL = 8
 REDUCE_LR_PATIENCE_VAL = 8
 REDUCE_LR_FACTOR_VAL = 0.5  # setting this to 1.0 will not reduce the learning rate
 # below are the parameters for early stopping
-EARLY_STOPPING_MONITOR = 'val_loss'
+EARLY_STOPPING_MONITOR = 'val_acc'
+EARLY_STOPPING_MONITOR_MODE = ['max', 'min'][0]
 EARLY_STOPPING_PATIENCE = 20
 
 ######################################################################################################################################################

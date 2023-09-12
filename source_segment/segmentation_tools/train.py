@@ -120,7 +120,7 @@ def get_callbacks(
     )
     stop_flag = defined_callbacks['val'].early_stopping(
         monitor_value=result[seg_cf.EARLY_STOPPING_MONITOR],
-        mode='min',
+        mode=seg_cf.EARLY_STOPPING_MONITOR_MODE,
         patience=seg_cf.EARLY_STOPPING_PATIENCE,
         indicator_text="Early stopping: "
     )

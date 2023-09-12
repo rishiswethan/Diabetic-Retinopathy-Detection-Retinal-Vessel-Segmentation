@@ -345,7 +345,9 @@ def display(display_list, title=None):
 
     for i in range(len(display_list)):
         plt.subplot(1, len(display_list), i + 1)
-        plt.title(title[i])
+        # set the title with big font size
+        plt.title(title[i], fontsize=40)
+
         plt.imshow(display_list[i])
         plt.axis('off')
     plt.show()

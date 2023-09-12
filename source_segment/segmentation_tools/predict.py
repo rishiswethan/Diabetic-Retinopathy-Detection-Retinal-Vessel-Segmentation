@@ -11,7 +11,7 @@ import source_segment.segmentation_tools.data_handling as data_handling
 import source_segment.segmentation_tools.train as train
 
 
-MODEL_SAVE_PATH = cf.MODEL_SAVE_PATH
+MODEL_SAVE_PATH = cf.MODEL_SAVE_PATH_BEST_TRAIN_LOSS
 IMAGE_SIZE = seg_cf.HEIGHT
 
 

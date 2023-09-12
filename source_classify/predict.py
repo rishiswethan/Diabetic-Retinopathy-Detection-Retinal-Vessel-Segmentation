@@ -202,10 +202,10 @@ class Predict:
                     plt.figure(figsize=(10, 5))
                     plt.subplot(1, 2, 1)
                     plt.imshow(preprocessed_img_transp)
-                    plt.title("Prediction: " + output_label)
+                    plt.title("Prediction: " + output_label, fontdict={'fontsize': 40})
                     plt.subplot(1, 2, 2)
                     plt.imshow(overlap_image)
-                    plt.title("GradCAM")
+                    plt.title("GradCAM", fontdict={'fontsize': 20})
                     plt.show()
                 else:
                     plt.imshow(preprocessed_img_transp)
