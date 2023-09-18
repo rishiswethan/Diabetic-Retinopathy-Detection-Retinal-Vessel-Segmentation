@@ -1,3 +1,7 @@
+
+### Classification and Segmentation:
+<img src="display_samples/Diabetic retinopathy detection in fundus photography of the Human Eye using AI.png" width="500">
+
 This project was tested on Ubuntu 22.04 LTS with Python 3.10
 
 ### Summary:
@@ -30,12 +34,13 @@ There are 2 aspects to this project:
     - Input folder contains sample images to test the program. You can either feed the entire folder path or a single image path as input to the program.
     - `run.py`  gives you a quick way to run the program, and is meant to be an example of how to use the various functions.
 
+    
+#### PS: Consider leaving a star if you find this useful. Thanks!
+
 
 ### Display Items:
-### Classification and Segmentation:
-<img src="display_samples/Diabetic retinopathy detection in fundus photography of the Human Eye using AI.png" width="500">
 
-### Confusion Matrix:
+### Confusion Matrix On Test Set:
 <img src="display_samples/plot_confusion_matrix.png" width="500">
 
 ### More Samples:
